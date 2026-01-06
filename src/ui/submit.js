@@ -79,6 +79,9 @@ export function createSubmitUI({ store, actions }) {
     nameField.classList.toggle("is-hidden", !isPublic);
     nameInput.required = !!isPublic;
     nameInput.disabled = !isPublic;
+    if (!isPublic) {
+      nameInput.value = "";
+    }
     updateButton();
   };
 
@@ -108,9 +111,10 @@ export function createSubmitUI({ store, actions }) {
       return;
     }
 
-    const visibility = visibilityInput.value;
+    const uiVisibility = visibilityInput.value;
+    const visibility = uiVisibility === "public" ? "public" : "private";
     let name = null;
-    if (visibility === "public") {
+    if (uiVisibility === "public") {
       const normalizedName = normalizeName(nameInput.value);
       if (!normalizedName) {
         showFeedback("Add a name to submit publicly.");
@@ -123,6 +127,8 @@ export function createSubmitUI({ store, actions }) {
         return;
       }
       name = normalizedName;
+    } else {
+      nameInput.value = "";
     }
 
     const result = await actions.submitConfession({

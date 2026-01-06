@@ -219,8 +219,10 @@ export function createActions(store) {
           const remainingMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
           message = `You can post again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`;
         } else {
-          message = "Please try again later.";
+          message = "Submission blocked by server rules. Check visibility mapping and auth session.";
         }
+      } else if (error && error.message) {
+        message = `${error.message}${error.code ? ` (code ${error.code})` : ""}`;
       }
       store.setState({ submitting: false, submitError: message });
       return { ok: false, error: message };
