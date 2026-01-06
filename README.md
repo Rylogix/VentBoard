@@ -10,7 +10,7 @@ A calm, anonymous confession wall with a shared global feed powered by Supabase.
 - Reverse-chronological ordering with infinite scroll
 - No accounts, cookies, or tracking
 
-## Supabase setup (free tier)
+## Supabase setup free tier
 
 Create a new Supabase project and run the SQL below in the SQL editor:
 
