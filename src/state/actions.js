@@ -76,7 +76,7 @@ export function createActions(store) {
     }));
   };
 
-  const submitConfession = async ({ content, visibility }) => {
+  const submitConfession = async ({ content, visibility, name }) => {
     if (configError) {
       store.setState({ submitError: configError });
       return { ok: false, error: configError };
@@ -84,7 +84,7 @@ export function createActions(store) {
 
     store.setState({ submitting: true, submitError: "" });
 
-    const { data, error } = await createConfession({ content, visibility });
+    const { data, error } = await createConfession({ content, visibility, name });
 
     if (error) {
       const message = errorMessage(error, "Submission failed. Please try again.");

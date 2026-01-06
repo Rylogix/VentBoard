@@ -20,6 +20,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.confessions (
   id uuid primary key default gen_random_uuid(),
   content text not null,
+  name text,
   visibility text not null check (visibility in ('public', 'private')),
   created_at timestamptz not null default now()
 );
@@ -33,6 +34,20 @@ create policy "confessions_read_all" on public.confessions
 create policy "confessions_insert_all" on public.confessions
   for insert
   with check (true);
+```
+
+If you already created the table without `created_at`, run:
+
+```sql
+alter table public.confessions
+  add column if not exists created_at timestamptz not null default now();
+```
+
+If you already created the table without `name`, run:
+
+```sql
+alter table public.confessions
+  add column if not exists name text;
 ```
 
 ## Configure environment variables
@@ -63,5 +78,5 @@ The `Deploy GitHub Pages` workflow generates `config.js` from secrets during dep
 
 ## Notes
 
-- The visibility toggle is a label only; every confession appears in the global feed.
+- Public submissions show the provided name; anonymous submissions omit it and are not shown in the public feed.
 - The Supabase anon key is exposed client-side by design. Do not commit secrets.

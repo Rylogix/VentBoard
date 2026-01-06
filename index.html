@@ -18,10 +18,6 @@
         <div>
           <p class="eyebrow">A quiet place for shared, anonymous truths.</p>
           <h1>Confession Board</h1>
-          <p class="lead">
-            Drop a confession, let it drift into the global stream. No accounts.
-            No names. Just a collective exhale.
-          </p>
         </div>
         <div class="status-pill" id="connection-status">Offline</div>
       </header>
@@ -47,19 +43,29 @@
                 <span>Public</span>
               </label>
               <label class="toggle">
-                <input type="radio" name="visibility" value="private" required />
-                <span>Private</span>
+                <input type="radio" name="visibility" value="private" required checked />
+                <span>Anonymous</span>
               </label>
             </div>
             <p class="helper">
-              Public confessions appear in the global feed. Private confessions
-              are saved but not shown.
+              Public submissions show your name in the global feed. Anonymous
+              submissions are saved without a name and do not appear.
             </p>
           </div>
 
+          <label class="field name-field is-hidden" id="name-field">
+            <span>Name (shown for Public)</span>
+            <input
+              id="confession-name"
+              name="confessionName"
+              type="text"
+              maxlength="32"
+              placeholder="Name or initials"
+            />
+          </label>
+
           <div class="form-actions">
             <button class="primary" type="submit">Release confession</button>
-            <p class="helper">Anonymous by design. No identity data stored.</p>
           </div>
 
           <div class="form-feedback" id="form-feedback" role="status"></div>

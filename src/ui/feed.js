@@ -7,16 +7,17 @@ function confessionCard(confession, isNew) {
   const meta = document.createElement("div");
   meta.className = "confession-meta";
 
-  const visibility = document.createElement("span");
-  visibility.className = `visibility ${confession.visibility}`;
-  visibility.textContent = confession.visibility;
+  const name = document.createElement("span");
+  name.className = "confession-name";
+  const rawName = (confession.name || confession.display_name || "").trim();
+  name.textContent = rawName || "Anonymous";
 
   const time = document.createElement("time");
   time.setAttribute("datetime", confession.created_at);
   time.dataset.createdAt = confession.created_at;
   time.textContent = formatRelativeTime(confession.created_at);
 
-  meta.appendChild(visibility);
+  meta.appendChild(name);
   meta.appendChild(time);
 
   const content = document.createElement("p");

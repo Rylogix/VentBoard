@@ -152,6 +152,22 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(154, 87, 71, 0.2);
 }
 
+input[type="text"] {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 0.98rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(154, 87, 71, 0.2);
+}
+
 .toggle-group {
   display: inline-flex;
   background: var(--bg-card);
@@ -198,6 +214,19 @@ textarea:focus {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+}
+
+.name-field {
+  overflow: hidden;
+  max-height: 120px;
+  transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease;
+}
+
+.name-field.is-hidden {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+  pointer-events: none;
 }
 
 button {
@@ -310,26 +339,9 @@ button:disabled {
   white-space: pre-wrap;
 }
 
-.visibility {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border: 1px solid transparent;
-}
-
-.visibility.public {
-  border-color: rgba(154, 87, 71, 0.4);
-  color: var(--accent-strong);
-}
-
-.visibility.private {
-  border-color: rgba(199, 187, 179, 0.35);
-  color: var(--text-muted);
+.confession-name {
+  font-weight: 500;
+  color: var(--text-main);
 }
 
 .feed-footer {
