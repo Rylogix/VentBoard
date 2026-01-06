@@ -18,6 +18,13 @@ function errorMessage(error, fallback = DEFAULT_ERROR) {
   return error.message || fallback;
 }
 
+function formatCooldown(remainingMs) {
+  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
 export function createActions(store) {
   const pageSize = getPageSize();
   const configError = getConfigError();
@@ -244,8 +251,30 @@ export function createActions(store) {
 
     if (error) {
       console.log("INSERT_ERROR", error);
-      let message = "Submission failed.";
-      if (error && error.message) {
+      let message = errorMessage(error, "Submission failed. Please try again.");
+      if (isRlsError(error)) {
+        let cooldownEnd = null;
+        let lastSubmitted = null;
+        const { data: latest, error: latestError } = await fetchLatestConfessionByUser(sessionUserId);
+        if (!latestError && latest) {
+          const createdAtMs = new Date(latest.created_at).getTime();
+          cooldownEnd = Number.isNaN(createdAtMs) ? null : createdAtMs + 60 * 60 * 1000;
+          lastSubmitted = { id: latest.id, createdAt: latest.created_at };
+        } else {
+          const stored = readStoredState(sessionUserId);
+          cooldownEnd = stored?.cooldownEnd || null;
+          lastSubmitted = stored?.lastSubmitted || null;
+        }
+
+        if (cooldownEnd && Date.now() < cooldownEnd) {
+          const remainingMs = cooldownEnd - Date.now();
+          message = `You're on cooldown. Try again in ${formatCooldown(remainingMs)}.`;
+          store.setState({ lastSubmitted, cooldownEnd });
+          writeStoredState(sessionUserId, { lastSubmitted, cooldownEnd });
+        } else {
+          message = "You're on cooldown. Try again later.";
+        }
+      } else if (error && error.message) {
         message = `${error.message}${error.code ? ` (code ${error.code})` : ""}`;
       }
       store.setState({ submitting: false, submitError: message });

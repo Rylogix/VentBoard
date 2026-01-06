@@ -32,13 +32,10 @@ export function createSubmitUI({ store, actions }) {
   const normalizeName = (value) => value.replace(/\s+/g, " ").trim();
 
   const formatCooldown = (remainingMs) => {
-    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    if (minutes >= 60) {
-      return `${Math.ceil(minutes)}m`;
-    }
-    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+    return `${minutes}m ${seconds}s`;
   };
 
   const updateCooldownUI = () => {
@@ -58,9 +55,10 @@ export function createSubmitUI({ store, actions }) {
     const remainingMs = state.cooldownEnd - Date.now();
     if (remainingMs <= 0) {
       cooldownTimer.textContent = "";
+      store.setState({ cooldownEnd: null });
       return;
     }
-    cooldownTimer.textContent = `Next confession in ${formatCooldown(remainingMs)}.`;
+    cooldownTimer.textContent = `You're on cooldown. Try again in ${formatCooldown(remainingMs)}.`;
   };
 
   const updateUndoUI = () => {
