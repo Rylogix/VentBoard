@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confession Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600&family=Newsreader:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">A quiet place for shared, anonymous truths.</p>
+          <h1>Confession Board</h1>
+          <p class="lead">
+            Drop a confession, let it drift into the global stream. No accounts.
+            No names. Just a collective exhale.
+          </p>
+        </div>
+        <div class="status-pill" id="connection-status">Offline</div>
+      </header>
+
+      <section class="panel">
+        <form id="confession-form" class="confession-form">
+          <label class="field">
+            <span>Your confession</span>
+            <textarea
+              id="confession-input"
+              name="confession"
+              rows="5"
+              placeholder="Say the thing you have been carrying."
+              required
+            ></textarea>
+          </label>
+
+          <div class="field">
+            <span>Visibility</span>
+            <div class="toggle-group" role="radiogroup" aria-label="Visibility">
+              <label class="toggle">
+                <input type="radio" name="visibility" value="public" required />
+                <span>Public</span>
+              </label>
+              <label class="toggle">
+                <input type="radio" name="visibility" value="private" required />
+                <span>Private</span>
+              </label>
+            </div>
+            <p class="helper">
+              Public confessions appear in the global feed. Private confessions
+              are saved but not shown.
+            </p>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary" type="submit">Release confession</button>
+            <p class="helper">Anonymous by design. No identity data stored.</p>
+          </div>
+
+          <div class="form-feedback" id="form-feedback" role="status"></div>
+        </form>
+      </section>
+
+      <section class="panel feed-panel">
+        <div class="feed-header">
+          <div>
+            <h2>Global Feed</h2>
+            <p class="helper" id="feed-meta">Latest confessions from everywhere.</p>
+          </div>
+          <button class="ghost" id="refresh-feed" type="button">Refresh</button>
+        </div>
+
+        <div class="feed-list" id="feed-list" aria-live="polite"></div>
+
+        <div class="feed-footer">
+          <div class="feed-status" id="feed-status">
+            <span id="feed-status-text"></span>
+            <button class="ghost small" id="retry-feed" type="button">Retry</button>
+          </div>
+          <button class="ghost" id="load-more" type="button">Load more</button>
+          <div id="feed-sentinel" class="feed-sentinel" aria-hidden="true"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>window.__ENV__ = window.__ENV__ || {};</script>
+    <script src="config.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
