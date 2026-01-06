@@ -12,6 +12,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   deploy:
     environment:
@@ -33,6 +37,15 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: Prepare Pages output
+        run: |
+          if [ ! -f index.html ]; then
+            echo "index.html missing in output directory"
+            ls -la
+            exit 1
+          fi
+          echo "ventboard.org" > CNAME
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
