@@ -28,22 +28,24 @@ createSubmitUI({ store, actions });
 
 const connectionStatus = document.getElementById("connection-status");
 
-store.subscribe((state) => {
-  if (state.configError) {
-    connectionStatus.textContent = "Config missing";
-    connectionStatus.dataset.state = "error";
-    return;
-  }
+if (connectionStatus) {
+  store.subscribe((state) => {
+    if (state.configError) {
+      connectionStatus.textContent = "Config missing";
+      connectionStatus.dataset.state = "error";
+      return;
+    }
 
-  if (state.error) {
-    connectionStatus.textContent = "Feed issue";
-    connectionStatus.dataset.state = "warning";
-    return;
-  }
+    if (state.error) {
+      connectionStatus.textContent = "Feed issue";
+      connectionStatus.dataset.state = "warning";
+      return;
+    }
 
-  connectionStatus.textContent = "Connected";
-  connectionStatus.dataset.state = "ok";
-});
+    connectionStatus.textContent = "Connected";
+    connectionStatus.dataset.state = "ok";
+  });
+}
 
 startAuthBootstrap({ store, actions });
 actions.loadInitialConfessions();
