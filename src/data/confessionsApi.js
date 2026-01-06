@@ -89,12 +89,12 @@ export async function fetchConfessions({ offset = 0, limit = PAGE_SIZE } = {}) {
   return { data: data || [], error };
 }
 
-export async function createConfession({ content, visibility, name, userId }) {
+export async function createConfession(payload) {
   if (!supabase) {
     return { data: null, error: new Error(configError) };
   }
 
-  if (!userId) {
+  if (!payload || !payload.user_id) {
     return { data: null, error: new Error("Anonymous session not ready.") };
   }
 
@@ -103,16 +103,29 @@ export async function createConfession({ content, visibility, name, userId }) {
     return { data: null, error: nameError };
   }
 
-  if (name && !nameColumn) {
+  const hasName = Object.prototype.hasOwnProperty.call(payload, "name");
+  const nameValue = hasName ? payload.name : undefined;
+
+  if (nameValue && !nameColumn) {
     return {
       data: null,
       error: new Error("Name column missing. Add a name column to enable public names."),
     };
   }
 
-  const payload = { content, visibility, user_id: userId };
+  if (payload.visibility !== "public" && payload.visibility !== "private") {
+    return { data: null, error: new Error("Invalid visibility value.") };
+  }
+
+  const insertPayload = {
+    content: payload.content,
+    visibility: payload.visibility,
+    user_id: payload.user_id,
+  };
   if (nameColumn) {
-    payload[nameColumn] = name || null;
+    if (hasName) {
+      insertPayload[nameColumn] = nameValue ?? null;
+    }
   }
 
   const columns = ["id", "content", "created_at", "visibility"];
@@ -122,7 +135,7 @@ export async function createConfession({ content, visibility, name, userId }) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .insert(payload)
+    .insert(insertPayload)
     .select(columns.join(", "))
     .single();
 

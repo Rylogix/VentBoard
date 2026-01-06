@@ -1,3 +1,4 @@
+import { supabase } from "../data/supabase.js";
 import {
   createConfession,
   deleteConfession,
@@ -175,7 +176,7 @@ export function createActions(store) {
     }));
   };
 
-  const submitConfession = async ({ content, visibility, name }) => {
+  const submitConfession = async ({ content, uiMode, name }) => {
     if (configError) {
       store.setState({ submitError: configError });
       return { ok: false, error: configError };
@@ -188,6 +189,26 @@ export function createActions(store) {
       return { ok: false, error: message };
     }
 
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.log("[auth] session error", sessionError);
+      const message = "Connecting... please wait";
+      store.setState({ submitError: message });
+      return { ok: false, error: message };
+    }
+
+    const session = sessionData?.session;
+    const sessionUserId = session?.user?.id;
+    if (!sessionUserId) {
+      const message = "Connecting... please wait";
+      store.setState({ submitError: message });
+      return { ok: false, error: message };
+    }
+
+    if (state.userId !== sessionUserId) {
+      store.setState({ userId: sessionUserId, isAuthReady: true, authLoading: false, authError: "" });
+    }
+
     if (state.cooldownEnd && Date.now() < state.cooldownEnd) {
       const remainingMs = state.cooldownEnd - Date.now();
       const remainingMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
@@ -198,33 +219,33 @@ export function createActions(store) {
 
     store.setState({ submitting: true, submitError: "" });
 
-    console.log("[submit] user id:", state.userId);
-    console.log("[submit] db visibility:", visibility);
-    if (visibility !== "public" && visibility !== "private") {
+    const dbVisibility = uiMode === "public" ? "public" : "private";
+    if (dbVisibility !== "public" && dbVisibility !== "private") {
       const message = "Invalid visibility selection.";
       store.setState({ submitting: false, submitError: message });
       return { ok: false, error: message };
     }
 
-    const { data, error } = await createConfession({
+    const payload = {
       content,
-      visibility,
-      name,
-      userId: state.userId,
-    });
+      visibility: dbVisibility,
+      user_id: sessionUserId,
+    };
+
+    if (uiMode === "public") {
+      payload.name = name;
+    } else {
+      payload.name = null;
+    }
+
+    console.log("INSERT_PAYLOAD", payload);
+
+    const { data, error } = await createConfession(payload);
 
     if (error) {
-      console.error("[supabase] insert error", error);
-      let message = errorMessage(error, "Submission failed. Please try again.");
-      if (isRlsError(error)) {
-        const remainingMs = state.cooldownEnd ? state.cooldownEnd - Date.now() : 0;
-        if (remainingMs > 0) {
-          const remainingMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
-          message = `You can post again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}.`;
-        } else {
-          message = "Submission blocked by server rules. Check visibility mapping and auth session.";
-        }
-      } else if (error && error.message) {
+      console.log("INSERT_ERROR", error);
+      let message = "Submission failed.";
+      if (error && error.message) {
         message = `${error.message}${error.code ? ` (code ${error.code})` : ""}`;
       }
       store.setState({ submitting: false, submitError: message });
@@ -251,7 +272,7 @@ export function createActions(store) {
       store.setState({ submitting: false, lastSubmitted, cooldownEnd });
     }
 
-    writeStoredState(state.userId, { lastSubmitted, cooldownEnd });
+    writeStoredState(sessionUserId, { lastSubmitted, cooldownEnd });
     return { ok: true, visibility: data.visibility, createdAt: data.created_at };
   };
 

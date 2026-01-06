@@ -112,15 +112,14 @@ export function createSubmitUI({ store, actions }) {
       return;
     }
 
-    const uiVisibility = visibilityInput.value;
-    const visibility = uiVisibility === "public" ? "public" : "private";
-    if (visibility !== "public" && visibility !== "private") {
-      console.error("[submit] invalid visibility mapping", { uiVisibility, visibility });
+    const uiMode = visibilityInput.value;
+    if (uiMode !== "public" && uiMode !== "anonymous") {
+      console.error("[submit] invalid visibility selection", { uiMode });
       showFeedback("Invalid visibility selection.");
       return;
     }
     let name = null;
-    if (uiVisibility === "public") {
+    if (uiMode === "public") {
       const normalizedName = normalizeName(nameInput.value);
       if (!normalizedName) {
         showFeedback("Add a name to submit publicly.");
@@ -139,7 +138,7 @@ export function createSubmitUI({ store, actions }) {
 
     const result = await actions.submitConfession({
       content,
-      visibility,
+      uiMode,
       name,
     });
 
