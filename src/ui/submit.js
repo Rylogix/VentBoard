@@ -24,6 +24,7 @@ export function createSubmitUI({ store, actions }) {
       !!state.configError ||
       !!state.authError ||
       state.authLoading ||
+      !state.isAuthReady ||
       !state.userId ||
       cooldownActive;
   };
@@ -113,6 +114,11 @@ export function createSubmitUI({ store, actions }) {
 
     const uiVisibility = visibilityInput.value;
     const visibility = uiVisibility === "public" ? "public" : "private";
+    if (visibility !== "public" && visibility !== "private") {
+      console.error("[submit] invalid visibility mapping", { uiVisibility, visibility });
+      showFeedback("Invalid visibility selection.");
+      return;
+    }
     let name = null;
     if (uiVisibility === "public") {
       const normalizedName = normalizeName(nameInput.value);

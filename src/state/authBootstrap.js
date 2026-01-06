@@ -5,7 +5,7 @@ const AUTH_ERROR_MESSAGE = "Unable to connect. Refresh and try again.";
 export function startAuthBootstrap({ store, actions }) {
   if (!supabase) {
     console.error("[auth] Supabase client missing");
-    store.setState({ authLoading: false, authError: AUTH_ERROR_MESSAGE });
+    store.setState({ authLoading: false, authError: AUTH_ERROR_MESSAGE, isAuthReady: false });
     return () => {};
   }
 
@@ -24,7 +24,7 @@ export function startAuthBootstrap({ store, actions }) {
     }
 
     console.log("[auth] user id:", userId);
-    store.setState({ userId, authLoading: false, authError: "" });
+    store.setState({ userId, authLoading: false, authError: "", isAuthReady: true });
 
     if (actions && typeof actions.hydrateCooldownState === "function") {
       await actions.hydrateCooldownState(userId);
@@ -32,7 +32,7 @@ export function startAuthBootstrap({ store, actions }) {
   };
 
   const run = async () => {
-    store.setState({ authLoading: true, authError: "" });
+    store.setState({ authLoading: true, authError: "", isAuthReady: false });
 
     console.log("[auth] checking session");
     const { data, error } = await supabase.auth.getSession();
@@ -73,7 +73,7 @@ export function startAuthBootstrap({ store, actions }) {
   const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
       console.log("[auth] state change:", event);
-      store.setState({ userId: session.user.id, authLoading: false, authError: "" });
+      store.setState({ userId: session.user.id, authLoading: false, authError: "", isAuthReady: true });
     }
   });
 

@@ -14,6 +14,7 @@ const store = createStore({
   configError: "",
   authError: "",
   authLoading: true,
+  isAuthReady: false,
   userId: "",
   lastSubmitted: null,
   cooldownEnd: null,

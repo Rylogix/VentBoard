@@ -182,8 +182,8 @@ export function createActions(store) {
     }
 
     const state = store.getState();
-    if (!state.userId) {
-      const message = state.authError || AUTH_ERROR;
+    if (!state.isAuthReady || !state.userId) {
+      const message = "Connecting... please wait";
       store.setState({ submitError: message });
       return { ok: false, error: message };
     }
@@ -198,6 +198,14 @@ export function createActions(store) {
 
     store.setState({ submitting: true, submitError: "" });
 
+    console.log("[submit] user id:", state.userId);
+    console.log("[submit] db visibility:", visibility);
+    if (visibility !== "public" && visibility !== "private") {
+      const message = "Invalid visibility selection.";
+      store.setState({ submitting: false, submitError: message });
+      return { ok: false, error: message };
+    }
+
     const { data, error } = await createConfession({
       content,
       visibility,
@@ -206,12 +214,7 @@ export function createActions(store) {
     });
 
     if (error) {
-      console.error("[supabase] insert error", {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
+      console.error("[supabase] insert error", error);
       let message = errorMessage(error, "Submission failed. Please try again.");
       if (isRlsError(error)) {
         const remainingMs = state.cooldownEnd ? state.cooldownEnd - Date.now() : 0;
