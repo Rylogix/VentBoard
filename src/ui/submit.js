@@ -5,6 +5,8 @@ export function createSubmitUI({ store, actions }) {
   const nameInput = document.getElementById("confession-name");
   const feedback = document.getElementById("form-feedback");
   const submitButton = form.querySelector("button[type='submit']");
+  const undoButton = document.getElementById("undo-submit");
+  const cooldownTimer = document.getElementById("cooldown-timer");
   const maxNameLength = 32;
 
   const showFeedback = (message, tone = "") => {
@@ -14,10 +16,53 @@ export function createSubmitUI({ store, actions }) {
 
   const updateButton = () => {
     const state = store.getState();
-    submitButton.disabled = !form.checkValidity() || state.submitting || !!state.configError;
+    const now = Date.now();
+    const cooldownActive = state.cooldownEnd && now < state.cooldownEnd;
+    submitButton.disabled =
+      !form.checkValidity() ||
+      state.submitting ||
+      !!state.configError ||
+      !!state.authError ||
+      !state.userId ||
+      cooldownActive;
   };
 
   const normalizeName = (value) => value.replace(/\s+/g, " ").trim();
+
+  const formatCooldown = (remainingMs) => {
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes >= 60) {
+      return `${Math.ceil(minutes)}m`;
+    }
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  };
+
+  const updateCooldownUI = () => {
+    const state = store.getState();
+    if (!state.cooldownEnd) {
+      cooldownTimer.textContent = "";
+      return;
+    }
+    const remainingMs = state.cooldownEnd - Date.now();
+    if (remainingMs <= 0) {
+      cooldownTimer.textContent = "";
+      return;
+    }
+    cooldownTimer.textContent = `Next confession in ${formatCooldown(remainingMs)}.`;
+  };
+
+  const updateUndoUI = () => {
+    const state = store.getState();
+    if (!state.lastSubmitted) {
+      undoButton.classList.add("is-hidden");
+      return;
+    }
+    const createdAt = new Date(state.lastSubmitted.createdAt).getTime();
+    const canUndo = !Number.isNaN(createdAt) && Date.now() - createdAt <= 5 * 60 * 1000;
+    undoButton.classList.toggle("is-hidden", !canUndo);
+  };
 
   const updateVisibility = () => {
     const visibilityInput = form.querySelector("input[name='visibility']:checked");
@@ -30,6 +75,14 @@ export function createSubmitUI({ store, actions }) {
 
   form.addEventListener("input", updateButton);
   form.addEventListener("change", updateVisibility);
+  undoButton.addEventListener("click", async () => {
+    const result = await actions.undoLastSubmission();
+    if (!result.ok) {
+      showFeedback(result.error || "Undo failed.");
+      return;
+    }
+    showFeedback("Confession removed.", "success");
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -87,12 +140,19 @@ export function createSubmitUI({ store, actions }) {
   store.subscribe((state) => {
     if (state.configError) {
       showFeedback(state.configError);
+    } else if (state.authError) {
+      showFeedback(state.authError);
     } else if (state.submitError) {
       showFeedback(state.submitError);
     }
 
     updateButton();
+    updateCooldownUI();
+    updateUndoUI();
   });
 
   updateVisibility();
+  updateCooldownUI();
+  updateUndoUI();
+  setInterval(updateCooldownUI, 1000);
 }

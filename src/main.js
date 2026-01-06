@@ -11,6 +11,10 @@ const store = createStore({
   error: "",
   submitError: "",
   configError: "",
+  authError: "",
+  userId: "",
+  lastSubmitted: null,
+  cooldownEnd: null,
   page: { offset: 0, limit: 12, hasMore: true },
 });
 
@@ -38,4 +42,5 @@ store.subscribe((state) => {
   connectionStatus.dataset.state = "ok";
 });
 
+actions.bootstrapAuth();
 actions.loadInitialConfessions();

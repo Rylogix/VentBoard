@@ -89,9 +89,13 @@ export async function fetchConfessions({ offset = 0, limit = PAGE_SIZE } = {}) {
   return { data: data || [], error };
 }
 
-export async function createConfession({ content, visibility, name }) {
+export async function createConfession({ content, visibility, name, userId }) {
   if (!supabase) {
     return { data: null, error: new Error(configError) };
+  }
+
+  if (!userId) {
+    return { data: null, error: new Error("Anonymous session not ready.") };
   }
 
   const { column: nameColumn, error: nameError } = await resolveNameColumn();
@@ -106,7 +110,7 @@ export async function createConfession({ content, visibility, name }) {
     };
   }
 
-  const payload = { content, visibility };
+  const payload = { content, visibility, user_id: userId };
   if (nameColumn) {
     payload[nameColumn] = name || null;
   }
@@ -123,4 +127,36 @@ export async function createConfession({ content, visibility, name }) {
     .single();
 
   return { data, error };
+}
+
+export async function fetchLatestConfessionByUser(userId) {
+  if (!supabase) {
+    return { data: null, error: new Error(configError) };
+  }
+
+  if (!userId) {
+    return { data: null, error: new Error("Anonymous session not ready.") };
+  }
+
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select("id, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  return { data: data && data.length ? data[0] : null, error: null };
+}
+
+export async function deleteConfession(id) {
+  if (!supabase) {
+    return { error: new Error(configError) };
+  }
+
+  const { error } = await supabase.from(TABLE).delete().eq("id", id);
+  return { error };
 }
