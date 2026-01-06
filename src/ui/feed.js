@@ -42,26 +42,42 @@ export function createFeedUI({ store, actions }) {
   const status = document.getElementById("feed-status");
   const statusText = document.getElementById("feed-status-text");
   const retryButton = document.getElementById("retry-feed");
-  const loadMoreButton = document.getElementById("load-more");
   const refreshButton = document.getElementById("refresh-feed");
   const sentinel = document.getElementById("feed-sentinel");
   const meta = document.getElementById("feed-meta");
+  const loadingIndicator = document.getElementById("feed-loading");
 
   let lastRenderedIds = new Set();
+  let isRequestingNext = false;
 
   retryButton.addEventListener("click", () => actions.loadInitialConfessions());
   refreshButton.addEventListener("click", () => actions.loadInitialConfessions());
-  loadMoreButton.addEventListener("click", () => actions.loadMoreConfessions());
+
+  const requestNextPage = async () => {
+    const state = store.getState();
+    if (
+      isRequestingNext ||
+      state.loadingMore ||
+      state.loading ||
+      !state.page.hasMore ||
+      state.configError
+    ) {
+      return;
+    }
+    isRequestingNext = true;
+    await actions.loadMoreConfessions();
+    isRequestingNext = false;
+  };
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          actions.loadMoreConfessions();
+          requestNextPage();
         }
       });
     },
-    { rootMargin: "200px" }
+    { rootMargin: "600px" }
   );
 
   observer.observe(sentinel);
@@ -70,8 +86,8 @@ export function createFeedUI({ store, actions }) {
     if (state.configError) {
       statusText.textContent = state.configError;
       status.classList.add("active");
-      loadMoreButton.disabled = true;
       refreshButton.disabled = true;
+      loadingIndicator.classList.remove("is-active");
       meta.textContent = "Waiting for configuration.";
       return;
     }
@@ -117,8 +133,8 @@ export function createFeedUI({ store, actions }) {
       meta.textContent = `${state.confessions.length} confessions in view.`;
     }
 
-    loadMoreButton.disabled = state.loadingMore || state.loading || !state.page.hasMore;
     refreshButton.disabled = state.loading || state.loadingMore;
+    loadingIndicator.classList.toggle("is-active", state.loadingMore);
   };
 
   store.subscribe(render);

@@ -351,6 +351,17 @@ button:disabled {
   gap: 12px;
 }
 
+.feed-loading {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.feed-loading.is-active {
+  opacity: 1;
+}
+
 .feed-status {
   display: flex;
   align-items: center;
