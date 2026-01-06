@@ -9,8 +9,26 @@ const UNITS = [
   { unit: "second", seconds: 1 },
 ];
 
+function parseSupabaseTimestamp(value) {
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return new Date(value);
+  }
+
+  const trimmed = value.trim();
+  const hasTimezone = /[zZ]|[+-]\d{2}:\d{2}$|[+-]\d{4}$/.test(trimmed);
+  const normalized = hasTimezone ? trimmed : `${trimmed.replace(" ", "T")}Z`;
+  const parsed = new Date(normalized);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed;
+  }
+  return new Date(trimmed);
+}
+
 export function formatRelativeTime(isoDate, now = new Date()) {
-  const date = isoDate instanceof Date ? isoDate : new Date(isoDate);
+  const date = parseSupabaseTimestamp(isoDate);
   const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
   const absSeconds = Math.abs(diffSeconds);
 
