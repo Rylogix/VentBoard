@@ -1,3 +1,5 @@
+import { parseSupabaseTimestamp } from "../utils/time.js";
+
 export function createSubmitUI({ store, actions }) {
   const form = document.getElementById("confession-form");
   const textarea = document.getElementById("confession-input");
@@ -67,7 +69,7 @@ export function createSubmitUI({ store, actions }) {
       undoButton.classList.add("is-hidden");
       return;
     }
-    const createdAt = new Date(state.lastSubmitted.createdAt).getTime();
+    const createdAt = parseSupabaseTimestamp(state.lastSubmitted.createdAt).getTime();
     const canUndo = !Number.isNaN(createdAt) && Date.now() - createdAt <= 5 * 60 * 1000;
     undoButton.classList.toggle("is-hidden", !canUndo);
   };
@@ -149,8 +151,8 @@ export function createSubmitUI({ store, actions }) {
     updateVisibility();
     textarea.focus();
     const successMessage =
-      result.visibility === "private"
-        ? "Saved anonymously. It will not appear in the public feed."
+      uiMode === "anonymous"
+        ? "Saved anonymously. It appears in the public feed."
         : "Confession released.";
     showFeedback(successMessage, "success");
   });

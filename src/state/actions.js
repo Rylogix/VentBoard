@@ -1,4 +1,5 @@
 import { supabase } from "../data/supabase.js";
+import { parseSupabaseTimestamp } from "../utils/time.js";
 import {
   createConfession,
   deleteConfession,
@@ -75,7 +76,7 @@ export function createActions(store) {
     if (!record || !record.created_at) {
       return;
     }
-    const createdAtMs = new Date(record.created_at).getTime();
+    const createdAtMs = parseSupabaseTimestamp(record.created_at).getTime();
     if (Number.isNaN(createdAtMs)) {
       return;
     }
@@ -226,7 +227,7 @@ export function createActions(store) {
 
     store.setState({ submitting: true, submitError: "" });
 
-    const dbVisibility = uiMode === "public" ? "public" : "private";
+    const dbVisibility = "public";
     if (dbVisibility !== "public" && dbVisibility !== "private") {
       const message = "Invalid visibility selection.";
       store.setState({ submitting: false, submitError: message });
@@ -257,7 +258,7 @@ export function createActions(store) {
         let lastSubmitted = null;
         const { data: latest, error: latestError } = await fetchLatestConfessionByUser(sessionUserId);
         if (!latestError && latest) {
-          const createdAtMs = new Date(latest.created_at).getTime();
+          const createdAtMs = parseSupabaseTimestamp(latest.created_at).getTime();
           cooldownEnd = Number.isNaN(createdAtMs) ? null : createdAtMs + 60 * 60 * 1000;
           lastSubmitted = { id: latest.id, createdAt: latest.created_at };
         } else {
@@ -267,7 +268,7 @@ export function createActions(store) {
         }
 
         if (!cooldownEnd && lastSubmitted?.createdAt) {
-          const createdAtMs = new Date(lastSubmitted.createdAt).getTime();
+          const createdAtMs = parseSupabaseTimestamp(lastSubmitted.createdAt).getTime();
           cooldownEnd = Number.isNaN(createdAtMs) ? null : createdAtMs + 60 * 60 * 1000;
         }
 
@@ -286,7 +287,7 @@ export function createActions(store) {
       return { ok: false, error: message };
     }
 
-    const createdAtMs = new Date(data.created_at).getTime();
+    const createdAtMs = parseSupabaseTimestamp(data.created_at).getTime();
     const cooldownEnd = Number.isNaN(createdAtMs) ? null : createdAtMs + 60 * 60 * 1000;
     const lastSubmitted = { id: data.id, createdAt: data.created_at };
 

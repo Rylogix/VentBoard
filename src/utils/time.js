@@ -9,7 +9,7 @@ const UNITS = [
   { unit: "second", seconds: 1 },
 ];
 
-function parseSupabaseTimestamp(value) {
+export function parseSupabaseTimestamp(value) {
   if (value instanceof Date) {
     return value;
   }
