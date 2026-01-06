@@ -52,6 +52,15 @@ node server.js
 
 Open `http://localhost:5173` in your browser.
 
+## GitHub Pages deployment
+
+Set repository secrets:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+The `Deploy GitHub Pages` workflow generates `config.js` from secrets during deploy.
+
 ## Notes
 
 - The visibility toggle is a label only; every confession appears in the global feed.
