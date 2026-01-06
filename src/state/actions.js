@@ -266,6 +266,11 @@ export function createActions(store) {
           lastSubmitted = stored?.lastSubmitted || null;
         }
 
+        if (!cooldownEnd && lastSubmitted?.createdAt) {
+          const createdAtMs = new Date(lastSubmitted.createdAt).getTime();
+          cooldownEnd = Number.isNaN(createdAtMs) ? null : createdAtMs + 60 * 60 * 1000;
+        }
+
         if (cooldownEnd && Date.now() < cooldownEnd) {
           const remainingMs = cooldownEnd - Date.now();
           message = `You're on cooldown. Try again in ${formatCooldown(remainingMs)}.`;
