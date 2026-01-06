@@ -1,4 +1,3 @@
-import { supabase } from "../data/supabase.js";
 import {
   createConfession,
   deleteConfession,
@@ -9,7 +8,7 @@ import {
 } from "../data/confessionsApi.js";
 
 const DEFAULT_ERROR = "We could not reach the confession stream.";
-const AUTH_ERROR = "Anonymous session unavailable.";
+const AUTH_ERROR = "Unable to connect. Refresh and try again.";
 
 function errorMessage(error, fallback = DEFAULT_ERROR) {
   if (!error) {
@@ -95,7 +94,13 @@ export function createActions(store) {
         }
         return;
       }
-      store.setState({ authError: errorMessage(error, AUTH_ERROR) });
+      console.warn("[auth] cooldown lookup failed", error);
+      if (stored && stored.lastSubmitted) {
+        store.setState({
+          lastSubmitted: stored.lastSubmitted,
+          cooldownEnd: stored.cooldownEnd || null,
+        });
+      }
       return;
     }
 
@@ -109,37 +114,6 @@ export function createActions(store) {
     } else {
       clearStoredState(userId);
     }
-  };
-
-  const bootstrapAuth = async () => {
-    if (configError || !supabase) {
-      return;
-    }
-
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      store.setState({ authError: AUTH_ERROR });
-      return;
-    }
-
-    let session = data.session;
-    if (!session || !session.user) {
-      const { data: signData, error: signError } = await supabase.auth.signInAnonymously();
-      if (signError) {
-        store.setState({ authError: AUTH_ERROR });
-        return;
-      }
-      session = signData.session;
-    }
-
-    const userId = session?.user?.id;
-    if (!userId) {
-      store.setState({ authError: AUTH_ERROR });
-      return;
-    }
-
-    store.setState({ userId, authError: "" });
-    await hydrateCooldownState(userId);
   };
 
   const loadInitialConfessions = async () => {
@@ -232,6 +206,12 @@ export function createActions(store) {
     });
 
     if (error) {
+      console.error("[supabase] insert error", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       let message = errorMessage(error, "Submission failed. Please try again.");
       if (isRlsError(error)) {
         const remainingMs = state.cooldownEnd ? state.cooldownEnd - Date.now() : 0;
@@ -308,10 +288,10 @@ export function createActions(store) {
   };
 
   return {
-    bootstrapAuth,
     loadInitialConfessions,
     loadMoreConfessions,
     submitConfession,
     undoLastSubmission,
+    hydrateCooldownState,
   };
 }

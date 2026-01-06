@@ -1,4 +1,5 @@
 import { createActions } from "./state/actions.js";
+import { startAuthBootstrap } from "./state/authBootstrap.js";
 import { createStore } from "./state/store.js";
 import { createFeedUI } from "./ui/feed.js";
 import { createSubmitUI } from "./ui/submit.js";
@@ -12,6 +13,7 @@ const store = createStore({
   submitError: "",
   configError: "",
   authError: "",
+  authLoading: true,
   userId: "",
   lastSubmitted: null,
   cooldownEnd: null,
@@ -42,5 +44,5 @@ store.subscribe((state) => {
   connectionStatus.dataset.state = "ok";
 });
 
-actions.bootstrapAuth();
+startAuthBootstrap({ store, actions });
 actions.loadInitialConfessions();

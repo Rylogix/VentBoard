@@ -23,6 +23,7 @@ export function createSubmitUI({ store, actions }) {
       state.submitting ||
       !!state.configError ||
       !!state.authError ||
+      state.authLoading ||
       !state.userId ||
       cooldownActive;
   };
@@ -41,6 +42,14 @@ export function createSubmitUI({ store, actions }) {
 
   const updateCooldownUI = () => {
     const state = store.getState();
+    if (state.authLoading) {
+      cooldownTimer.textContent = "Connecting...";
+      return;
+    }
+    if (state.authError) {
+      cooldownTimer.textContent = "Unable to connect. Refresh and try again.";
+      return;
+    }
     if (!state.cooldownEnd) {
       cooldownTimer.textContent = "";
       return;
