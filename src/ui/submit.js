@@ -94,7 +94,7 @@ export function createSubmitUI({ store, actions }) {
       showFeedback(result.error || "Undo failed.");
       return;
     }
-    showFeedback("Confession removed.", "success");
+    showFeedback("Vent removed.", "success");
   });
 
   form.addEventListener("submit", async (event) => {
@@ -153,7 +153,7 @@ export function createSubmitUI({ store, actions }) {
     const successMessage =
       uiMode === "anonymous"
         ? "Saved anonymously. It appears in the public feed."
-        : "Confession released.";
+        : "Vent released.";
     showFeedback(successMessage, "success");
   });
 

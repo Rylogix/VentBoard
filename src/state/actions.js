@@ -9,7 +9,7 @@ import {
   getPageSize,
 } from "../data/confessionsApi.js";
 
-const DEFAULT_ERROR = "We could not reach the confession stream.";
+const DEFAULT_ERROR = "We could not reach the vent stream.";
 const AUTH_ERROR = "Unable to connect. Refresh and try again.";
 
 function errorMessage(error, fallback = DEFAULT_ERROR) {

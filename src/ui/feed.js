@@ -102,10 +102,10 @@ export function createFeedUI({ store, actions }) {
 
     if (state.confessions.length === 0 && !state.loading) {
       list.innerHTML = "";
-      statusText.textContent = "No confessions yet. Be the first.";
+      statusText.textContent = "No vents yet. Be the first.";
       status.classList.remove("active");
     } else if (state.loading) {
-      statusText.textContent = "Loading global confessions...";
+      statusText.textContent = "Loading global vents...";
       status.classList.remove("active");
     } else if (state.error) {
       statusText.textContent = state.error;
@@ -130,7 +130,7 @@ export function createFeedUI({ store, actions }) {
     lastRenderedIds = ids;
 
     if (state.confessions.length > 0) {
-      meta.textContent = `${state.confessions.length} confessions in view.`;
+      meta.textContent = `${state.confessions.length} vents in view.`;
     }
 
     refreshButton.disabled = state.loading || state.loadingMore;

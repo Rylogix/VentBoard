@@ -387,6 +387,13 @@ button:disabled {
   height: 1px;
 }
 
+.page-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 12px 0 0;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
