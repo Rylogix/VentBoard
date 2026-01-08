@@ -621,8 +621,61 @@ button:disabled {
 
 .support-leaderboard-list {
   margin: 0;
-  padding-left: 20px;
+  padding: 0;
   color: var(--text-muted);
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  counter-reset: leaderboard-rank;
+}
+
+.support-leaderboard-list li {
+  counter-increment: leaderboard-rank;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.support-leaderboard-list li::before {
+  content: counter(leaderboard-rank);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(154, 87, 71, 0.2);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.support-donor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.support-donor-name {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.support-donor-method {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.support-donor-amount {
+  color: var(--text-main);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .rules-list {
