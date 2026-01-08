@@ -74,7 +74,7 @@ export async function fetchConfessions({ offset = 0, limit = PAGE_SIZE } = {}) {
     return { data: [], error: nameError };
   }
 
-  const columns = ["id", "content", "created_at", "visibility"];
+  const columns = ["id", "content", "created_at", "visibility", "confession_replies(count)"];
   if (nameColumn) {
     columns.push(nameColumn);
   }
@@ -128,7 +128,7 @@ export async function createConfession(payload) {
     }
   }
 
-  const columns = ["id", "content", "created_at", "visibility"];
+  const columns = ["id", "content", "created_at", "visibility", "confession_replies(count)"];
   if (nameColumn) {
     columns.push(nameColumn);
   }

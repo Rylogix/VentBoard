@@ -45,6 +45,30 @@ function updateRelativeTimes(container) {
   });
 }
 
+function getReplyCountSeed(confession) {
+  if (!confession || typeof confession !== "object") {
+    return null;
+  }
+
+  const directCount = confession.reply_count ?? confession.replyCount;
+  if (Number.isFinite(directCount)) {
+    return directCount;
+  }
+
+  const embedded = confession.confession_replies;
+  if (Array.isArray(embedded)) {
+    const embeddedCount = embedded[0]?.count;
+    if (Number.isFinite(embeddedCount)) {
+      return embeddedCount;
+    }
+    if (embedded.length === 0) {
+      return 0;
+    }
+  }
+
+  return null;
+}
+
 export function createFeedUI({ store, actions }) {
   const list = document.getElementById("feed-list");
   const status = document.getElementById("feed-status");
@@ -116,7 +140,9 @@ export function createFeedUI({ store, actions }) {
 
   const syncRepliesUI = (entry, state) => {
     const replyState = getReplyState(state, entry.confessionId);
-    const replyCount = replyState.items.length;
+    const seededCount = Number.isFinite(entry.replyCountSeed) ? entry.replyCountSeed : null;
+    const replyCount = replyState.hasLoaded ? replyState.items.length : seededCount;
+    const showCount = Number.isFinite(replyCount);
     const isOpen = replyState.isOpen;
 
     entry.replyPanel.classList.toggle("is-hidden", !isOpen);
@@ -126,10 +152,9 @@ export function createFeedUI({ store, actions }) {
     let toggleLabel = "View replies";
     if (replyState.loading) {
       toggleLabel = "Loading replies...";
-    } else if (replyState.hasLoaded) {
-      toggleLabel = isOpen
-        ? `Hide replies (${replyCount})`
-        : `View replies (${replyCount})`;
+    } else if (replyState.hasLoaded || showCount) {
+      const countLabel = showCount ? ` (${replyCount})` : "";
+      toggleLabel = isOpen ? `Hide replies${countLabel}` : `View replies${countLabel}`;
     } else if (isOpen) {
       toggleLabel = "Hide replies";
     }
@@ -313,6 +338,7 @@ export function createFeedUI({ store, actions }) {
     entry.time.dataset.createdAt = confession.created_at;
     entry.time.textContent = formatRelativeTime(confession.created_at);
     entry.content.textContent = confession.content;
+    entry.replyCountSeed = getReplyCountSeed(confession);
     syncRepliesUI(entry, state);
   };
 
