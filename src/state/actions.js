@@ -10,6 +10,7 @@ import {
 } from "../data/confessionsApi.js";
 import { createReply, fetchRepliesByConfession } from "../data/repliesApi.js";
 import { containsSlur } from "../utils/moderation.js";
+import { normalizeReplyName } from "../utils/replyName.js";
 
 const DEFAULT_ERROR = "We could not reach the vent stream.";
 const AUTH_ERROR = "Unable to connect. Refresh and try again.";
@@ -432,7 +433,7 @@ export function createActions(store) {
     }
   };
 
-  const submitReply = async ({ confessionId, content }) => {
+  const submitReply = async ({ confessionId, content, replyName }) => {
     if (configError) {
       writeRepliesState(confessionId, { error: configError, isOpen: true });
       return { ok: false, error: configError };
@@ -475,6 +476,11 @@ export function createActions(store) {
       writeRepliesState(confessionId, { error: message, isOpen: true });
       return { ok: false, error: message };
     }
+    const { value: replyNameValue, error: replyNameError } = normalizeReplyName(replyName);
+    if (replyNameError) {
+      writeRepliesState(confessionId, { error: replyNameError, isOpen: true });
+      return { ok: false, error: replyNameError };
+    }
     writeRepliesState(confessionId, { submitting: true, error: "", isOpen: true });
 
     const payload = {
@@ -482,6 +488,9 @@ export function createActions(store) {
       content: trimmed,
       user_id: sessionUserId,
     };
+    if (replyNameValue) {
+      payload.reply_name = replyNameValue;
+    }
 
     const { data, error } = await createReply(payload);
 

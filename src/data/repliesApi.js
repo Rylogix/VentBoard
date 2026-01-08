@@ -13,7 +13,7 @@ export async function fetchRepliesByConfession(confessionId) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .select("id, confession_id, content, created_at, user_id")
+    .select("id, confession_id, content, reply_name, created_at, user_id")
     .eq("confession_id", confessionId)
     .order("created_at", { ascending: true });
 
@@ -42,11 +42,14 @@ export async function createReply(payload) {
     content: payload.content,
     user_id: payload.user_id,
   };
+  if (payload.reply_name) {
+    insertPayload.reply_name = payload.reply_name;
+  }
 
   const { data, error } = await supabase
     .from(TABLE)
     .insert(insertPayload)
-    .select("id, confession_id, content, created_at, user_id")
+    .select("id, confession_id, content, reply_name, created_at, user_id")
     .single();
 
   return { data, error };

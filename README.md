@@ -30,6 +30,7 @@ create table if not exists public.confession_replies (
   id uuid primary key default gen_random_uuid(),
   confession_id uuid not null references public.confessions(id) on delete cascade,
   content text not null,
+  reply_name text,
   user_id uuid not null,
   created_at timestamptz not null default now()
 );
@@ -67,6 +68,13 @@ If you already created the table without `name`, run:
 ```sql
 alter table public.confessions
   add column if not exists name text;
+```
+
+If you already created the replies table without `reply_name`, run:
+
+```sql
+alter table public.confession_replies
+  add column if not exists reply_name text;
 ```
 
 
