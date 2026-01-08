@@ -6,6 +6,7 @@ A calm, anonymous confession wall with a shared global feed powered by Supabase.
 
 - Anonymous, text-only confessions
 - Required public/private label on every submission
+- Replies on each confession
 - Global feed shared across all users
 - Reverse-chronological ordering with infinite scroll
 - No accounts, cookies, or tracking
@@ -25,6 +26,16 @@ create table if not exists public.confessions (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.confession_replies (
+  id uuid primary key default gen_random_uuid(),
+  confession_id uuid not null references public.confessions(id) on delete cascade,
+  content text not null,
+  user_id uuid not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.confession_replies enable row level security;
+
 alter table public.confessions enable row level security;
 
 create policy "confessions_read_all" on public.confessions
@@ -32,6 +43,14 @@ create policy "confessions_read_all" on public.confessions
   using (true);
 
 create policy "confessions_insert_all" on public.confessions
+  for insert
+  with check (true);
+
+create policy "confession_replies_read_all" on public.confession_replies
+  for select
+  using (true);
+
+create policy "confession_replies_insert_all" on public.confession_replies
   for insert
   with check (true);
 ```

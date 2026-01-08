@@ -8,9 +8,18 @@ import {
   getConfigError,
   getPageSize,
 } from "../data/confessionsApi.js";
+import { createReply, fetchRepliesByConfession } from "../data/repliesApi.js";
 
 const DEFAULT_ERROR = "We could not reach the vent stream.";
 const AUTH_ERROR = "Unable to connect. Refresh and try again.";
+const DEFAULT_REPLY_STATE = {
+  items: [],
+  loading: false,
+  error: "",
+  isOpen: false,
+  hasLoaded: false,
+  submitting: false,
+};
 
 function errorMessage(error, fallback = DEFAULT_ERROR) {
   if (!error) {
@@ -70,6 +79,31 @@ export function createActions(store) {
     } catch {
       // Ignore storage errors.
     }
+  };
+
+  const readRepliesState = (state, confessionId) => {
+    if (!confessionId) {
+      return DEFAULT_REPLY_STATE;
+    }
+    return state.repliesByConfession?.[confessionId] || DEFAULT_REPLY_STATE;
+  };
+
+  const writeRepliesState = (confessionId, updater) => {
+    if (!confessionId) {
+      return;
+    }
+    store.setState((current) => {
+      const currentEntry = readRepliesState(current, confessionId);
+      const nextEntry =
+        typeof updater === "function" ? updater(currentEntry) : { ...currentEntry, ...updater };
+      return {
+        ...current,
+        repliesByConfession: {
+          ...(current.repliesByConfession || {}),
+          [confessionId]: nextEntry,
+        },
+      };
+    });
   };
 
   const applyCooldownFromRecord = (record, userId) => {
@@ -311,6 +345,113 @@ export function createActions(store) {
     return { ok: true, visibility: data.visibility, createdAt: data.created_at };
   };
 
+  const loadReplies = async (confessionId) => {
+    if (configError || !confessionId) {
+      return;
+    }
+
+    writeRepliesState(confessionId, {
+      loading: true,
+      error: "",
+      isOpen: true,
+    });
+
+    const { data, error } = await fetchRepliesByConfession(confessionId);
+
+    if (error) {
+      writeRepliesState(confessionId, {
+        loading: false,
+        error: errorMessage(error, "Unable to load replies."),
+        isOpen: true,
+        hasLoaded: false,
+      });
+      return;
+    }
+
+    writeRepliesState(confessionId, {
+      loading: false,
+      items: data,
+      error: "",
+      isOpen: true,
+      hasLoaded: true,
+    });
+  };
+
+  const openReplies = async (confessionId) => {
+    if (!confessionId) {
+      return;
+    }
+
+    const current = store.getState();
+    const entry = readRepliesState(current, confessionId);
+    writeRepliesState(confessionId, { isOpen: true });
+
+    if (!entry.hasLoaded && !entry.loading) {
+      await loadReplies(confessionId);
+    }
+  };
+
+  const toggleReplies = async (confessionId) => {
+    if (!confessionId) {
+      return;
+    }
+
+    const current = store.getState();
+    const entry = readRepliesState(current, confessionId);
+    const nextOpen = !entry.isOpen;
+    writeRepliesState(confessionId, { isOpen: nextOpen });
+
+    if (nextOpen && !entry.hasLoaded && !entry.loading) {
+      await loadReplies(confessionId);
+    }
+  };
+
+  const submitReply = async ({ confessionId, content }) => {
+    if (configError) {
+      writeRepliesState(confessionId, { error: configError, isOpen: true });
+      return { ok: false, error: configError };
+    }
+
+    const state = store.getState();
+    if (!state.isAuthReady || !state.userId) {
+      const message = "Connecting... please wait";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+
+    const trimmed = typeof content === "string" ? content.trim() : "";
+    if (!trimmed) {
+      const message = "Reply cannot be empty.";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+
+    writeRepliesState(confessionId, { submitting: true, error: "", isOpen: true });
+
+    const { data, error } = await createReply({
+      confession_id: confessionId,
+      content: trimmed,
+      user_id: state.userId,
+    });
+
+    if (error) {
+      const message = errorMessage(error, "Reply failed. Please try again.");
+      writeRepliesState(confessionId, { submitting: false, error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+
+    writeRepliesState(confessionId, (entry) => ({
+      ...entry,
+      submitting: false,
+      error: "",
+      isOpen: true,
+      hasLoaded: true,
+      items: [...entry.items, data],
+    }));
+
+    return { ok: true, data };
+  };
+
   const undoLastSubmission = async () => {
     const state = store.getState();
     if (!state.lastSubmitted) {
@@ -354,5 +495,9 @@ export function createActions(store) {
     submitConfession,
     undoLastSubmission,
     hydrateCooldownState,
+    loadReplies,
+    openReplies,
+    toggleReplies,
+    submitReply,
   };
 }

@@ -16,6 +16,7 @@ const store = createStore({
   authLoading: true,
   isAuthReady: false,
   userId: "",
+  repliesByConfession: {},
   lastSubmitted: null,
   cooldownEnd: null,
   page: { offset: 0, limit: 12, hasMore: true },
