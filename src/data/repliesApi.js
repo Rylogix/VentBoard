@@ -6,7 +6,15 @@ let nameColumnPromise;
 
 function isMissingColumnError(error) {
   const message = (error && error.message ? error.message : "").toLowerCase();
-  return message.includes("column") && message.includes("does not exist");
+  if (!message || !message.includes("column")) {
+    return false;
+  }
+  return (
+    message.includes("does not exist") ||
+    message.includes("schema cache") ||
+    message.includes("could not find") ||
+    message.includes("unknown column")
+  );
 }
 
 async function resolveNameColumn() {
