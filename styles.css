@@ -428,20 +428,6 @@ button:disabled {
   gap: 10px;
 }
 
-.reply-name-field {
-  display: grid;
-  gap: 6px;
-}
-
-.reply-name-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.reply-name-input {
-  width: 100%;
-}
-
 .reply-input {
   min-height: 90px;
 }

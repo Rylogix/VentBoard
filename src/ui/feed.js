@@ -18,8 +18,7 @@ function replyItem(reply) {
 
   const name = document.createElement("span");
   name.className = "reply-name";
-  const rawName = (reply.name || reply.display_name || "").trim();
-  name.textContent = rawName || "Anonymous";
+  name.textContent = "Anonymous";
 
   const time = document.createElement("time");
   time.setAttribute("datetime", reply.created_at);
@@ -45,8 +44,6 @@ function updateRelativeTimes(container) {
     node.textContent = formatRelativeTime(node.dataset.createdAt, now);
   });
 }
-
-const normalizeName = (value) => value.replace(/\s+/g, " ").trim();
 
 function getReplyCountSeed(confession) {
   if (!confession || typeof confession !== "object") {
@@ -137,7 +134,6 @@ export function createFeedUI({ store, actions }) {
 
     entry.replySubmit.disabled = !canSubmit;
     entry.replyInput.disabled = replyState.submitting || !!state.configError;
-    entry.replyNameInput.disabled = replyState.submitting || !!state.configError;
     entry.replyInput.placeholder =
       state.authLoading || !state.isAuthReady || !state.userId ? "Connecting..." : "Write a reply.";
   };
@@ -254,25 +250,6 @@ export function createFeedUI({ store, actions }) {
     const replyForm = document.createElement("form");
     replyForm.className = "reply-form";
 
-    const replyNameField = document.createElement("div");
-    replyNameField.className = "reply-name-field";
-
-    const replyNameLabel = document.createElement("label");
-    replyNameLabel.className = "reply-name-label";
-    replyNameLabel.textContent = "Name (optional)";
-
-    const replyNameInput = document.createElement("input");
-    replyNameInput.className = "reply-name-input";
-    replyNameInput.type = "text";
-    replyNameInput.name = "replyName";
-    replyNameInput.placeholder = "Add a name";
-    replyNameInput.autocomplete = "off";
-    replyNameInput.maxLength = 32;
-
-    const replyNameId = `reply-name-${confession.id}`;
-    replyNameInput.id = replyNameId;
-    replyNameLabel.setAttribute("for", replyNameId);
-
     const replyInput = document.createElement("textarea");
     replyInput.className = "reply-input";
     replyInput.name = "reply";
@@ -289,9 +266,6 @@ export function createFeedUI({ store, actions }) {
     replySubmit.textContent = "Send";
 
     replyActions.appendChild(replySubmit);
-    replyNameField.appendChild(replyNameLabel);
-    replyNameField.appendChild(replyNameInput);
-    replyForm.appendChild(replyNameField);
     replyForm.appendChild(replyInput);
     replyForm.appendChild(replyActions);
 
@@ -316,7 +290,6 @@ export function createFeedUI({ store, actions }) {
       replyStatus,
       replyList,
       replyForm,
-      replyNameInput,
       replyInput,
       replySubmit,
     };
@@ -339,12 +312,9 @@ export function createFeedUI({ store, actions }) {
         replyInput.focus();
         return;
       }
-      const normalizedName = normalizeName(replyNameInput.value);
-
       const result = await actions.submitReply({
         confessionId: entry.confessionId,
         content: contentValue,
-        name: normalizedName || null,
       });
 
       if (result.ok) {

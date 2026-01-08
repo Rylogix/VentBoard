@@ -432,7 +432,7 @@ export function createActions(store) {
     }
   };
 
-  const submitReply = async ({ confessionId, content, name }) => {
+  const submitReply = async ({ confessionId, content }) => {
     if (configError) {
       writeRepliesState(confessionId, { error: configError, isOpen: true });
       return { ok: false, error: configError };
@@ -475,13 +475,6 @@ export function createActions(store) {
       writeRepliesState(confessionId, { error: message, isOpen: true });
       return { ok: false, error: message };
     }
-    const normalizedName = normalizeName(name);
-    if (normalizedName && containsSlur(normalizedName)) {
-      const message = "Name contains blocked language.";
-      writeRepliesState(confessionId, { error: message, isOpen: true });
-      return { ok: false, error: message };
-    }
-
     writeRepliesState(confessionId, { submitting: true, error: "", isOpen: true });
 
     const payload = {
@@ -489,9 +482,6 @@ export function createActions(store) {
       content: trimmed,
       user_id: sessionUserId,
     };
-    if (normalizedName) {
-      payload.name = normalizedName;
-    }
 
     const { data, error } = await createReply(payload);
 
