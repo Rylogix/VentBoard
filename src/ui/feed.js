@@ -80,6 +80,13 @@ function updateRelativeTimes(container) {
 const MAX_CONTENT_WORDS = 60;
 const MAX_REPLY_WORDS = 60;
 
+function normalizeLineBreaks(text) {
+  if (typeof text !== "string") {
+    return "";
+  }
+  return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\n{3,}/g, "\n\n");
+}
+
 function getWordCount(text) {
   if (typeof text !== "string") {
     return 0;
@@ -103,7 +110,22 @@ function truncateWords(text, maxWords) {
   if (words.length <= maxWords) {
     return text;
   }
-  return `${words.slice(0, maxWords).join(" ")}... `;
+  let count = 0;
+  let result = "";
+  const tokens = text.split(/(\s+)/);
+  for (const token of tokens) {
+    if (!token) {
+      continue;
+    }
+    if (/\S+/.test(token)) {
+      count += 1;
+      if (count > maxWords) {
+        break;
+      }
+    }
+    result += token;
+  }
+  return `${result.trimEnd()}... `;
 }
 
 function getReplyCountSeed(confession) {
@@ -423,7 +445,7 @@ export function createFeedUI({ store, actions }) {
     replySeeMore.addEventListener("click", () => actions.loadMoreReplies(entry.confessionId));
     expandButton.addEventListener("click", () => {
       entry.isExpanded = true;
-      entry.content.textContent = entry.contentFull || "";
+      entry.content.textContent = entry.contentNormalized || "";
       entry.expandButton.classList.add("is-hidden");
     });
 
@@ -467,14 +489,15 @@ export function createFeedUI({ store, actions }) {
     entry.time.textContent = formatRelativeTime(confession.created_at);
     if (entry.contentFull !== confession.content) {
       entry.contentFull = confession.content;
+      entry.contentNormalized = normalizeLineBreaks(confession.content);
       entry.isExpanded = false;
     }
-    const wordCount = getWordCount(entry.contentFull);
+    const wordCount = getWordCount(entry.contentNormalized);
     if (entry.isExpanded || wordCount <= MAX_CONTENT_WORDS) {
-      entry.content.textContent = entry.contentFull;
+      entry.content.textContent = entry.contentNormalized;
       entry.expandButton.classList.add("is-hidden");
     } else {
-      entry.content.textContent = truncateWords(entry.contentFull, MAX_CONTENT_WORDS);
+      entry.content.textContent = truncateWords(entry.contentNormalized, MAX_CONTENT_WORDS);
       entry.expandButton.classList.remove("is-hidden");
     }
     entry.replyCountSeed = getReplyCountSeed(confession);
