@@ -607,6 +607,15 @@ button:disabled {
   margin: 6px 0 0;
 }
 
+.support-link {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.support-link:hover {
+  color: var(--text-main);
+}
+
 .support-leaderboard {
   margin-top: 16px;
   padding-top: 12px;
@@ -626,11 +635,9 @@ button:disabled {
   list-style: none;
   display: grid;
   gap: 10px;
-  counter-reset: leaderboard-rank;
 }
 
 .support-leaderboard-list li {
-  counter-increment: leaderboard-rank;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -641,25 +648,17 @@ button:disabled {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.support-leaderboard-list li::before {
-  content: counter(leaderboard-rank);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: rgba(154, 87, 71, 0.2);
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
 .support-donor-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   flex: 1;
+}
+
+.support-donor-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .support-donor-name {
