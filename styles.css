@@ -368,6 +368,23 @@ button:disabled {
   gap: 10px;
 }
 
+.confession-actions .reply-toggle,
+.confession-actions .reply-compose {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.confession-actions .reply-toggle:hover,
+.confession-actions .reply-compose:hover {
+  color: var(--text-main);
+  transform: none;
+}
+
 .reply-panel {
   margin-top: 6px;
   padding-top: 12px;
