@@ -158,6 +158,7 @@ export function createFeedUI({ store, actions }) {
     entry.replyToggle.disabled = !!state.configError;
     entry.replyCompose.disabled = !!state.configError;
     entry.replyForm.classList.toggle("is-hidden", !isOpen || !replyState.isComposerOpen);
+    entry.replyCompose.classList.toggle("is-hidden", isOpen && replyState.isComposerOpen);
 
     if (isOpen) {
       if (entry.replyCompose.parentElement !== entry.replyPanelActions) {

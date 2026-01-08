@@ -379,6 +379,10 @@ button:disabled {
   font-size: 0.85rem;
 }
 
+.reply-compose.is-hidden {
+  display: none;
+}
+
 .confession-actions .reply-toggle:hover,
 .confession-actions .reply-compose:hover {
   color: var(--text-main);
