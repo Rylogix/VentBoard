@@ -2,7 +2,7 @@ import { supabase, configError } from "./supabase.js";
 
 const TABLE = "confession_replies";
 
-export async function fetchRepliesByConfession(confessionId) {
+export async function fetchRepliesByConfession(confessionId, { offset = 0, limit } = {}) {
   if (!supabase) {
     return { data: [], error: new Error(configError) };
   }
@@ -11,11 +11,17 @@ export async function fetchRepliesByConfession(confessionId) {
     return { data: [], error: new Error("Confession id missing.") };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from(TABLE)
     .select("id, confession_id, content, reply_name, created_at, user_id")
     .eq("confession_id", confessionId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
+
+  if (typeof limit === "number") {
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data, error } = await query;
 
   return { data: data || [], error };
 }

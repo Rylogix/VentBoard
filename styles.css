@@ -402,6 +402,17 @@ button:disabled {
   gap: 10px;
 }
 
+.reply-panel-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reply-see-more.is-hidden {
+  display: none;
+}
+
 .reply-item {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
@@ -428,6 +439,9 @@ button:disabled {
   gap: 10px;
 }
 
+.reply-form.is-hidden {
+  display: none;
+}
 .reply-name-field {
   display: grid;
   gap: 6px;

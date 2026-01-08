@@ -14,13 +14,21 @@ import { normalizeReplyName } from "../utils/replyName.js";
 
 const DEFAULT_ERROR = "We could not reach the vent stream.";
 const AUTH_ERROR = "Unable to connect. Refresh and try again.";
+const DEFAULT_REPLY_PAGE_SIZE = 5;
 const DEFAULT_REPLY_STATE = {
   items: [],
   loading: false,
+  loadingMore: false,
   error: "",
   isOpen: false,
   hasLoaded: false,
   submitting: false,
+  isComposerOpen: false,
+  page: {
+    offset: 0,
+    limit: DEFAULT_REPLY_PAGE_SIZE,
+    hasMore: true,
+  },
 };
 
 function normalizeName(value) {
@@ -28,6 +36,24 @@ function normalizeName(value) {
     return "";
   }
   return value.replace(/\s+/g, " ").trim();
+}
+
+function getReplyPageSize(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return DEFAULT_REPLY_PAGE_SIZE;
+  }
+  const total = items.reduce((sum, item) => {
+    const length = typeof item?.content === "string" ? item.content.length : 0;
+    return sum + length;
+  }, 0);
+  const average = total / items.length;
+  if (average > 240) {
+    return 3;
+  }
+  if (average > 160) {
+    return 4;
+  }
+  return 5;
 }
 
 function errorMessage(error, fallback = DEFAULT_ERROR) {
@@ -112,6 +138,24 @@ export function createActions(store) {
           [confessionId]: nextEntry,
         },
       };
+    });
+  };
+
+  const closeOtherReplies = (confessionId) => {
+    store.setState((current) => {
+      const existing = current.repliesByConfession || {};
+      let changed = false;
+      const nextReplies = { ...existing };
+      Object.entries(existing).forEach(([id, entry]) => {
+        if (id !== confessionId && (entry?.isOpen || entry?.isComposerOpen)) {
+          nextReplies[id] = { ...entry, isOpen: false, isComposerOpen: false };
+          changed = true;
+        }
+      });
+      if (!changed) {
+        return current;
+      }
+      return { ...current, repliesByConfession: nextReplies };
     });
   };
 
@@ -372,35 +416,71 @@ export function createActions(store) {
     return { ok: true, visibility: data.visibility, createdAt: data.created_at };
   };
 
-  const loadReplies = async (confessionId) => {
+  const loadReplies = async (confessionId, { reset = false } = {}) => {
     if (configError || !confessionId) {
       return;
     }
 
-    writeRepliesState(confessionId, {
-      loading: true,
-      error: "",
-      isOpen: true,
-    });
+    const current = store.getState();
+    const entry = readRepliesState(current, confessionId);
+    const rawLimit = entry.page?.limit || DEFAULT_REPLY_PAGE_SIZE;
+    const limit = Math.min(5, Math.max(3, rawLimit));
+    const offset = reset ? 0 : entry.page?.offset || 0;
 
-    const { data, error } = await fetchRepliesByConfession(confessionId);
+    if (reset) {
+      writeRepliesState(confessionId, {
+        loading: true,
+        loadingMore: false,
+        error: "",
+        isOpen: true,
+        hasLoaded: false,
+        page: {
+          offset: 0,
+          limit,
+          hasMore: true,
+        },
+      });
+    } else {
+      if (entry.loadingMore || entry.loading) {
+        return;
+      }
+      writeRepliesState(confessionId, {
+        loadingMore: true,
+        error: "",
+        isOpen: true,
+      });
+    }
+
+    const { data, error } = await fetchRepliesByConfession(confessionId, { offset, limit });
 
     if (error) {
       writeRepliesState(confessionId, {
         loading: false,
+        loadingMore: false,
         error: errorMessage(error, "Unable to load replies."),
         isOpen: true,
-        hasLoaded: false,
+        hasLoaded: reset ? false : entry.hasLoaded,
       });
       return;
     }
 
+    const mergedItems = reset ? data : [...entry.items, ...data];
+    const nextOffset = offset + data.length;
+    const nextLimit = getReplyPageSize(mergedItems);
+    const hasMore = data.length === limit;
+
     writeRepliesState(confessionId, {
       loading: false,
-      items: data,
+      loadingMore: false,
+      items: mergedItems,
       error: "",
       isOpen: true,
       hasLoaded: true,
+      page: {
+        offset: nextOffset,
+        limit: nextLimit,
+        hasMore,
+      },
     });
   };
 
@@ -409,12 +489,28 @@ export function createActions(store) {
       return;
     }
 
+    closeOtherReplies(confessionId);
     const current = store.getState();
     const entry = readRepliesState(current, confessionId);
-    writeRepliesState(confessionId, { isOpen: true });
+    writeRepliesState(confessionId, { isOpen: true, isComposerOpen: false });
 
     if (!entry.hasLoaded && !entry.loading) {
-      await loadReplies(confessionId);
+      await loadReplies(confessionId, { reset: true });
+    }
+  };
+
+  const openReplyComposer = async (confessionId) => {
+    if (!confessionId) {
+      return;
+    }
+
+    closeOtherReplies(confessionId);
+    const current = store.getState();
+    const entry = readRepliesState(current, confessionId);
+    writeRepliesState(confessionId, { isOpen: true, isComposerOpen: true });
+
+    if (!entry.hasLoaded && !entry.loading) {
+      await loadReplies(confessionId, { reset: true });
     }
   };
 
@@ -426,11 +522,28 @@ export function createActions(store) {
     const current = store.getState();
     const entry = readRepliesState(current, confessionId);
     const nextOpen = !entry.isOpen;
-    writeRepliesState(confessionId, { isOpen: nextOpen });
+    if (nextOpen) {
+      closeOtherReplies(confessionId);
+    }
+    writeRepliesState(confessionId, { isOpen: nextOpen, isComposerOpen: false });
 
     if (nextOpen && !entry.hasLoaded && !entry.loading) {
-      await loadReplies(confessionId);
+      await loadReplies(confessionId, { reset: true });
     }
+  };
+
+  const loadMoreReplies = async (confessionId) => {
+    if (!confessionId) {
+      return;
+    }
+
+    const current = store.getState();
+    const entry = readRepliesState(current, confessionId);
+    if (!entry.hasLoaded || entry.loading || entry.loadingMore || !entry.page?.hasMore) {
+      return;
+    }
+
+    await loadReplies(confessionId, { reset: false });
   };
 
   const submitReply = async ({ confessionId, content, replyName }) => {
@@ -504,14 +617,25 @@ export function createActions(store) {
       return { ok: false, error: message };
     }
 
-    writeRepliesState(confessionId, (entry) => ({
-      ...entry,
-      submitting: false,
-      error: "",
-      isOpen: true,
-      hasLoaded: true,
-      items: [...entry.items, data],
-    }));
+    writeRepliesState(confessionId, (entry) => {
+      const nextItems = [data, ...entry.items];
+      const nextOffset = entry.page ? entry.page.offset + 1 : nextItems.length;
+      return {
+        ...entry,
+        submitting: false,
+        error: "",
+        isOpen: true,
+        hasLoaded: true,
+        isComposerOpen: false,
+        items: nextItems,
+        page: entry.page
+          ? {
+              ...entry.page,
+              offset: nextOffset,
+            }
+          : entry.page,
+      };
+    });
 
     return { ok: true, data };
   };
@@ -561,7 +685,9 @@ export function createActions(store) {
     hydrateCooldownState,
     loadReplies,
     openReplies,
+    openReplyComposer,
     toggleReplies,
+    loadMoreReplies,
     submitReply,
   };
 }

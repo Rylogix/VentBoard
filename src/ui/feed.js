@@ -3,10 +3,17 @@ import { formatRelativeTime } from "../utils/time.js";
 const DEFAULT_REPLY_STATE = {
   items: [],
   loading: false,
+  loadingMore: false,
   error: "",
   isOpen: false,
   hasLoaded: false,
   submitting: false,
+  isComposerOpen: false,
+  page: {
+    offset: 0,
+    limit: 0,
+    hasMore: true,
+  },
 };
 
 function replyItem(reply) {
@@ -143,13 +150,22 @@ export function createFeedUI({ store, actions }) {
   const syncRepliesUI = (entry, state) => {
     const replyState = getReplyState(state, entry.confessionId);
     const seededCount = Number.isFinite(entry.replyCountSeed) ? entry.replyCountSeed : null;
-    const replyCount = replyState.hasLoaded ? replyState.items.length : seededCount;
+    const replyCount = Number.isFinite(seededCount) ? seededCount : replyState.items.length;
     const showCount = Number.isFinite(replyCount);
     const isOpen = replyState.isOpen;
 
     entry.replyPanel.classList.toggle("is-hidden", !isOpen);
     entry.replyToggle.disabled = !!state.configError;
     entry.replyCompose.disabled = !!state.configError;
+    entry.replyForm.classList.toggle("is-hidden", !isOpen || !replyState.isComposerOpen);
+
+    if (isOpen) {
+      if (entry.replyCompose.parentElement !== entry.replyPanelActions) {
+        entry.replyPanelActions.appendChild(entry.replyCompose);
+      }
+    } else if (entry.replyCompose.parentElement !== entry.actionsRow) {
+      entry.actionsRow.appendChild(entry.replyCompose);
+    }
 
     let toggleLabel = "View replies";
     if (replyState.loading) {
@@ -185,6 +201,11 @@ export function createFeedUI({ store, actions }) {
 
     entry.replyStatus.textContent = statusMessage;
     entry.replyStatus.dataset.tone = replyState.error ? "error" : "";
+
+    const canLoadMore = replyState.hasLoaded && replyState.page?.hasMore;
+    entry.replySeeMore.classList.toggle("is-hidden", !canLoadMore);
+    entry.replySeeMore.disabled = replyState.loadingMore || replyState.loading || !!state.configError;
+    entry.replySeeMore.textContent = replyState.loadingMore ? "Loading..." : "See more";
 
     if (replyState.hasLoaded) {
       const fragment = document.createDocumentFragment();
@@ -249,6 +270,14 @@ export function createFeedUI({ store, actions }) {
     const replyList = document.createElement("div");
     replyList.className = "reply-list";
 
+    const replyPanelActions = document.createElement("div");
+    replyPanelActions.className = "reply-panel-actions";
+
+    const replySeeMore = document.createElement("button");
+    replySeeMore.className = "ghost small reply-see-more";
+    replySeeMore.type = "button";
+    replySeeMore.textContent = "See more";
+
     const replyForm = document.createElement("form");
     replyForm.className = "reply-form";
 
@@ -291,6 +320,8 @@ export function createFeedUI({ store, actions }) {
 
     replyPanel.appendChild(replyStatus);
     replyPanel.appendChild(replyList);
+    replyPanelActions.appendChild(replySeeMore);
+    replyPanel.appendChild(replyPanelActions);
     replyPanel.appendChild(replyForm);
 
     card.appendChild(meta);
@@ -306,9 +337,12 @@ export function createFeedUI({ store, actions }) {
       content,
       replyToggle,
       replyCompose,
+      actionsRow,
       replyPanel,
       replyStatus,
       replyList,
+      replyPanelActions,
+      replySeeMore,
       replyForm,
       replyNameInput,
       replyInput,
@@ -318,8 +352,9 @@ export function createFeedUI({ store, actions }) {
     replyToggle.addEventListener("click", () => actions.toggleReplies(entry.confessionId));
     replyCompose.addEventListener("click", async () => {
       focusReplyId = entry.confessionId;
-      await actions.openReplies(entry.confessionId);
+      await actions.openReplyComposer(entry.confessionId);
     });
+    replySeeMore.addEventListener("click", () => actions.loadMoreReplies(entry.confessionId));
 
     replyInput.addEventListener("input", () => {
       const state = store.getState();
@@ -341,6 +376,7 @@ export function createFeedUI({ store, actions }) {
 
       if (result.ok) {
         replyInput.value = "";
+        replyNameInput.value = "";
         const state = store.getState();
         updateReplyFormState(entry, state, getReplyState(state, entry.confessionId));
       } else {
@@ -430,7 +466,11 @@ export function createFeedUI({ store, actions }) {
 
     if (focusReplyId) {
       const entry = cardCache.get(focusReplyId);
-      if (entry && !entry.replyPanel.classList.contains("is-hidden")) {
+      if (
+        entry &&
+        !entry.replyPanel.classList.contains("is-hidden") &&
+        !entry.replyForm.classList.contains("is-hidden")
+      ) {
         entry.replyInput.focus();
         entry.replyInput.setSelectionRange(entry.replyInput.value.length, entry.replyInput.value.length);
       }
