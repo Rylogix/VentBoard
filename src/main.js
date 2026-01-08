@@ -46,6 +46,13 @@ const closeAllModals = () => {
   setModalState(rulesModal, false);
   setModalState(supportModal, false);
   document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
+};
+
+const applyModalLock = () => {
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+  document.body.style.overflow = "hidden";
+  document.body.style.paddingRight = scrollBarWidth > 0 ? `${scrollBarWidth}px` : "";
 };
 
 const openModal = (modal) => {
@@ -54,7 +61,7 @@ const openModal = (modal) => {
   }
   closeAllModals();
   setModalState(modal, true);
-  document.body.style.overflow = "hidden";
+  applyModalLock();
 };
 
 if (rulesButton && rulesModal) {
