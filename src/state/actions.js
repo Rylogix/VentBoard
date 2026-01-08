@@ -223,6 +223,7 @@ export function createActions(store) {
       confessions: [],
       page: { offset: 0, limit: pageSize, hasMore: true },
     });
+    store.setState({ repliesByConfession: {} });
 
     const { data, error } = await fetchConfessions({ offset: 0, limit: pageSize });
 

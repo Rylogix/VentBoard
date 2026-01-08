@@ -38,10 +38,34 @@ function replyItem(reply) {
 
   const content = document.createElement("p");
   content.className = "reply-content";
-  content.textContent = reply.content;
+
+  const expandButton = document.createElement("button");
+  expandButton.className = "reply-expand";
+  expandButton.type = "button";
+  expandButton.textContent = "See more";
+
+  const contentWrapper = document.createElement("span");
+  contentWrapper.className = "reply-content-wrapper";
+  contentWrapper.appendChild(content);
+  contentWrapper.appendChild(expandButton);
+
+  const fullContent = reply.content || "";
+  const replyWordCount = getWordCount(fullContent);
+  if (replyWordCount <= MAX_REPLY_WORDS) {
+    content.textContent = fullContent;
+    expandButton.classList.add("is-hidden");
+  } else {
+    content.textContent = truncateWords(fullContent, MAX_REPLY_WORDS);
+    expandButton.classList.remove("is-hidden");
+  }
+
+  expandButton.addEventListener("click", () => {
+    content.textContent = fullContent;
+    expandButton.classList.add("is-hidden");
+  });
 
   item.appendChild(meta);
-  item.appendChild(content);
+  item.appendChild(contentWrapper);
 
   return item;
 }
@@ -54,6 +78,7 @@ function updateRelativeTimes(container) {
 }
 
 const MAX_CONTENT_WORDS = 60;
+const MAX_REPLY_WORDS = 60;
 
 function getWordCount(text) {
   if (typeof text !== "string") {

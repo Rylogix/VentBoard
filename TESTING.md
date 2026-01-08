@@ -14,3 +14,4 @@ Replies UI checks
 - Only one post has replies open at a time; opening another closes the previous.
 - Reply list loads in batches (3–5); "See more" loads the next batch.
 - New replies appear at the top; composer hides after sending.
+- Long replies (60+ words) show inline "See more" to expand the full reply.
