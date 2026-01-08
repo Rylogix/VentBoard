@@ -50,6 +50,14 @@ body {
   gap: 24px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .eyebrow {
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -587,6 +595,16 @@ button:disabled {
   color: var(--text-muted);
   font-size: 0.95rem;
   line-height: 1.6;
+}
+
+.support-lead {
+  margin: 0 0 8px;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.support-list p {
+  margin: 6px 0 0;
 }
 
 .rules-list {

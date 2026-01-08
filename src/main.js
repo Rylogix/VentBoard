@@ -30,41 +30,64 @@ createSubmitUI({ store, actions });
 const rulesButton = document.getElementById("rules-button");
 const rulesModal = document.getElementById("rules-modal");
 const rulesClose = document.getElementById("rules-close");
+const supportButton = document.getElementById("support-button");
+const supportModal = document.getElementById("support-modal");
+const supportClose = document.getElementById("support-close");
 
-const openRules = () => {
-  if (!rulesModal) {
+const setModalState = (modal, isOpen) => {
+  if (!modal) {
     return;
   }
-  rulesModal.classList.remove("is-hidden");
-  rulesModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
+  modal.classList.toggle("is-hidden", !isOpen);
+  modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
 };
 
-const closeRules = () => {
-  if (!rulesModal) {
-    return;
-  }
-  rulesModal.classList.add("is-hidden");
-  rulesModal.setAttribute("aria-hidden", "true");
+const closeAllModals = () => {
+  setModalState(rulesModal, false);
+  setModalState(supportModal, false);
   document.body.style.overflow = "";
 };
 
-if (rulesButton && rulesModal) {
-  rulesButton.addEventListener("click", openRules);
-  if (rulesClose) {
-    rulesClose.addEventListener("click", closeRules);
+const openModal = (modal) => {
+  if (!modal) {
+    return;
   }
-  rulesModal.addEventListener("click", (event) => {
-    if (event.target === rulesModal) {
-      closeRules();
-    }
-  });
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !rulesModal.classList.contains("is-hidden")) {
-      closeRules();
-    }
-  });
+  closeAllModals();
+  setModalState(modal, true);
+  document.body.style.overflow = "hidden";
+};
+
+if (rulesButton && rulesModal) {
+  rulesButton.addEventListener("click", () => openModal(rulesModal));
 }
+if (rulesClose) {
+  rulesClose.addEventListener("click", closeAllModals);
+}
+if (supportButton && supportModal) {
+  supportButton.addEventListener("click", () => openModal(supportModal));
+}
+if (supportClose) {
+  supportClose.addEventListener("click", closeAllModals);
+}
+[rulesModal, supportModal].forEach((modal) => {
+  if (!modal) {
+    return;
+  }
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeAllModals();
+    }
+  });
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    const rulesOpen = rulesModal && !rulesModal.classList.contains("is-hidden");
+    const supportOpen = supportModal && !supportModal.classList.contains("is-hidden");
+    if (rulesOpen || supportOpen) {
+      closeAllModals();
+    }
+  }
+});
 
 const connectionStatus = document.getElementById("connection-status");
 
