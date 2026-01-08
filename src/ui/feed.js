@@ -78,7 +78,7 @@ function truncateWords(text, maxWords) {
   if (words.length <= maxWords) {
     return text;
   }
-  return `${words.slice(0, maxWords).join(" ")}...`;
+  return `${words.slice(0, maxWords).join(" ")}... `;
 }
 
 function getReplyCountSeed(confession) {
@@ -279,6 +279,11 @@ export function createFeedUI({ store, actions }) {
     expandButton.type = "button";
     expandButton.textContent = "See more";
 
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "confession-content-wrapper";
+    contentWrapper.appendChild(content);
+    contentWrapper.appendChild(expandButton);
+
     const actionsRow = document.createElement("div");
     actionsRow.className = "confession-actions";
 
@@ -359,8 +364,7 @@ export function createFeedUI({ store, actions }) {
     replyPanel.appendChild(replyForm);
 
     card.appendChild(meta);
-    card.appendChild(content);
-    card.appendChild(expandButton);
+    card.appendChild(contentWrapper);
     card.appendChild(actionsRow);
     card.appendChild(replyPanel);
 
@@ -370,6 +374,7 @@ export function createFeedUI({ store, actions }) {
       name,
       time,
       content,
+      contentWrapper,
       expandButton,
       replyToggle,
       replyCompose,
