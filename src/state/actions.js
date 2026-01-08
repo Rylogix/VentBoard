@@ -9,6 +9,7 @@ import {
   getPageSize,
 } from "../data/confessionsApi.js";
 import { createReply, fetchRepliesByConfession } from "../data/repliesApi.js";
+import { containsSlur } from "../utils/moderation.js";
 
 const DEFAULT_ERROR = "We could not reach the vent stream.";
 const AUTH_ERROR = "Unable to connect. Refresh and try again.";
@@ -20,6 +21,13 @@ const DEFAULT_REPLY_STATE = {
   hasLoaded: false,
   submitting: false,
 };
+
+function normalizeName(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.replace(/\s+/g, " ").trim();
+}
 
 function errorMessage(error, fallback = DEFAULT_ERROR) {
   if (!error) {
@@ -224,6 +232,24 @@ export function createActions(store) {
       return { ok: false, error: configError };
     }
 
+    const trimmedContent = typeof content === "string" ? content.trim() : "";
+    const normalizedName = normalizeName(name);
+    if (!trimmedContent) {
+      const message = "Vent cannot be empty.";
+      store.setState({ submitError: message });
+      return { ok: false, error: message };
+    }
+    if (containsSlur(trimmedContent)) {
+      const message = "Please remove slurs from your vent.";
+      store.setState({ submitError: message });
+      return { ok: false, error: message };
+    }
+    if (normalizedName && containsSlur(normalizedName)) {
+      const message = "Name contains blocked language.";
+      store.setState({ submitError: message });
+      return { ok: false, error: message };
+    }
+
     const state = store.getState();
     if (!state.isAuthReady || !state.userId) {
       const message = "Connecting... please wait";
@@ -269,13 +295,13 @@ export function createActions(store) {
     }
 
     const payload = {
-      content,
+      content: trimmedContent,
       visibility: dbVisibility,
       user_id: sessionUserId,
     };
 
     if (uiMode === "public") {
-      payload.name = name;
+      payload.name = normalizedName;
     } else {
       payload.name = null;
     }
@@ -406,7 +432,7 @@ export function createActions(store) {
     }
   };
 
-  const submitReply = async ({ confessionId, content }) => {
+  const submitReply = async ({ confessionId, content, name }) => {
     if (configError) {
       writeRepliesState(confessionId, { error: configError, isOpen: true });
       return { ok: false, error: configError };
@@ -444,14 +470,30 @@ export function createActions(store) {
       writeRepliesState(confessionId, { error: message, isOpen: true });
       return { ok: false, error: message };
     }
+    if (containsSlur(trimmed)) {
+      const message = "Please remove slurs from your reply.";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+    const normalizedName = normalizeName(name);
+    if (normalizedName && containsSlur(normalizedName)) {
+      const message = "Name contains blocked language.";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
 
     writeRepliesState(confessionId, { submitting: true, error: "", isOpen: true });
 
-    const { data, error } = await createReply({
+    const payload = {
       confession_id: confessionId,
       content: trimmed,
       user_id: sessionUserId,
-    });
+    };
+    if (normalizedName) {
+      payload.name = normalizedName;
+    }
+
+    const { data, error } = await createReply(payload);
 
     if (error) {
       console.error("[replies] insert failed", error);

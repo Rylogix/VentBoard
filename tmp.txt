@@ -108,49 +108,8 @@
       </footer>
     </main>
 
-    <div class="modal-backdrop is-hidden" id="rules-modal" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title">
-        <div class="modal-header">
-          <h3 id="rules-title">Community Rules</h3>
-          <button class="ghost small" id="rules-close" type="button">Close</button>
-        </div>
-        <div class="modal-body">
-          <ul class="rules-list">
-            <li>
-              <strong>Slur Speech Prohibited</strong>
-              <p>Any form of slur, including obfuscated or coded variations, is strictly forbidden.</p>
-            </li>
-            <li>
-              <strong>Profanity Allowed</strong>
-              <p>General profanity is permitted, provided it does not violate other rules.</p>
-            </li>
-            <li>
-              <strong>No Harassment or Bullying</strong>
-              <p>
-                Harassing, bullying, threatening, or targeting other users&mdash;whether in posts or replies&mdash;is
-                not allowed.
-              </p>
-            </li>
-            <li>
-              <strong>No Spam or Feed Flooding</strong>
-              <p>
-                Do not spam, flood the feed, or fill replies with low-effort or junk content. Content that does so may
-                be removed without notice.
-              </p>
-            </li>
-            <li>
-              <strong>Moderation Enforcement</strong>
-              <p>
-                Content that violates these rules may be deleted, and repeated violations may result in further action.
-              </p>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
     <script>window.__ENV__ = window.__ENV__ || {};</script>
     <script src="config.js"></script>
     <script type="module" src="src/main.js"></script>
   </body>
-</html>
+</html>\n
