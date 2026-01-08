@@ -357,6 +357,25 @@ button:disabled {
   white-space: pre-wrap;
 }
 
+.confession-expand {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.confession-expand:hover {
+  color: var(--text-main);
+}
+
+.confession-expand.is-hidden {
+  display: none;
+}
+
 .confession-name {
   font-weight: 500;
   color: var(--text-main);

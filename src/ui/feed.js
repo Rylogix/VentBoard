@@ -53,6 +53,34 @@ function updateRelativeTimes(container) {
   });
 }
 
+const MAX_CONTENT_WORDS = 60;
+
+function getWordCount(text) {
+  if (typeof text !== "string") {
+    return 0;
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return 0;
+  }
+  return trimmed.split(/\s+/).length;
+}
+
+function truncateWords(text, maxWords) {
+  if (typeof text !== "string") {
+    return "";
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const words = trimmed.split(/\s+/);
+  if (words.length <= maxWords) {
+    return text;
+  }
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
 function getReplyCountSeed(confession) {
   if (!confession || typeof confession !== "object") {
     return null;
@@ -246,6 +274,11 @@ export function createFeedUI({ store, actions }) {
     content.className = "confession-content";
     content.textContent = confession.content;
 
+    const expandButton = document.createElement("button");
+    expandButton.className = "confession-expand";
+    expandButton.type = "button";
+    expandButton.textContent = "See more";
+
     const actionsRow = document.createElement("div");
     actionsRow.className = "confession-actions";
 
@@ -327,6 +360,7 @@ export function createFeedUI({ store, actions }) {
 
     card.appendChild(meta);
     card.appendChild(content);
+    card.appendChild(expandButton);
     card.appendChild(actionsRow);
     card.appendChild(replyPanel);
 
@@ -336,6 +370,7 @@ export function createFeedUI({ store, actions }) {
       name,
       time,
       content,
+      expandButton,
       replyToggle,
       replyCompose,
       actionsRow,
@@ -356,6 +391,11 @@ export function createFeedUI({ store, actions }) {
       await actions.openReplyComposer(entry.confessionId);
     });
     replySeeMore.addEventListener("click", () => actions.loadMoreReplies(entry.confessionId));
+    expandButton.addEventListener("click", () => {
+      entry.isExpanded = true;
+      entry.content.textContent = entry.contentFull || "";
+      entry.expandButton.classList.add("is-hidden");
+    });
 
     replyInput.addEventListener("input", () => {
       const state = store.getState();
@@ -395,7 +435,18 @@ export function createFeedUI({ store, actions }) {
     entry.time.setAttribute("datetime", confession.created_at);
     entry.time.dataset.createdAt = confession.created_at;
     entry.time.textContent = formatRelativeTime(confession.created_at);
-    entry.content.textContent = confession.content;
+    if (entry.contentFull !== confession.content) {
+      entry.contentFull = confession.content;
+      entry.isExpanded = false;
+    }
+    const wordCount = getWordCount(entry.contentFull);
+    if (entry.isExpanded || wordCount <= MAX_CONTENT_WORDS) {
+      entry.content.textContent = entry.contentFull;
+      entry.expandButton.classList.add("is-hidden");
+    } else {
+      entry.content.textContent = truncateWords(entry.contentFull, MAX_CONTENT_WORDS);
+      entry.expandButton.classList.remove("is-hidden");
+    }
     entry.replyCountSeed = getReplyCountSeed(confession);
     syncRepliesUI(entry, state);
   };
