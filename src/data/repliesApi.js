@@ -13,7 +13,7 @@ export async function fetchRepliesByConfession(confessionId) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .select("id, confession_id, content, created_at")
+    .select("id, confession_id, content, created_at, user_id")
     .eq("confession_id", confessionId)
     .order("created_at", { ascending: true });
 
@@ -46,7 +46,7 @@ export async function createReply(payload) {
   const { data, error } = await supabase
     .from(TABLE)
     .insert(insertPayload)
-    .select("id, confession_id, content, created_at")
+    .select("id, confession_id, content, created_at, user_id")
     .single();
 
   return { data, error };

@@ -110,6 +110,8 @@ export function createFeedUI({ store, actions }) {
 
     entry.replySubmit.disabled = !canSubmit;
     entry.replyInput.disabled = replyState.submitting || !!state.configError;
+    entry.replyInput.placeholder =
+      state.authLoading || !state.isAuthReady || !state.userId ? "Connecting..." : "Write a reply.";
   };
 
   const syncRepliesUI = (entry, state) => {
@@ -148,6 +150,8 @@ export function createFeedUI({ store, actions }) {
       statusMessage = replyState.error;
     } else if (replyState.loading) {
       statusMessage = "Loading replies...";
+    } else if (state.authLoading || !state.isAuthReady || !state.userId) {
+      statusMessage = "Connecting...";
     } else if (replyState.hasLoaded && replyCount === 0) {
       statusMessage = "No replies yet.";
     }

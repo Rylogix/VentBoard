@@ -419,6 +419,25 @@ export function createActions(store) {
       return { ok: false, error: message };
     }
 
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.log("[replies] session error", sessionError);
+      const message = "Connecting... please wait";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+
+    const sessionUserId = sessionData?.session?.user?.id;
+    if (!sessionUserId) {
+      const message = "Connecting... please wait";
+      writeRepliesState(confessionId, { error: message, isOpen: true });
+      return { ok: false, error: message };
+    }
+
+    if (state.userId !== sessionUserId) {
+      store.setState({ userId: sessionUserId, isAuthReady: true, authLoading: false, authError: "" });
+    }
+
     const trimmed = typeof content === "string" ? content.trim() : "";
     if (!trimmed) {
       const message = "Reply cannot be empty.";
@@ -431,11 +450,15 @@ export function createActions(store) {
     const { data, error } = await createReply({
       confession_id: confessionId,
       content: trimmed,
-      user_id: state.userId,
+      user_id: sessionUserId,
     });
 
     if (error) {
-      const message = errorMessage(error, "Reply failed. Please try again.");
+      console.error("[replies] insert failed", error);
+      let message = errorMessage(error, "Reply failed. Please try again.");
+      if (isRlsError(error)) {
+        message = "Reply not allowed right now.";
+      }
       writeRepliesState(confessionId, { submitting: false, error: message, isOpen: true });
       return { ok: false, error: message };
     }
