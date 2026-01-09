@@ -189,6 +189,7 @@ export function createFeedUI({ store, actions }) {
     isRequestingNext = false;
   };
 
+  const sentinelMargin = 600;
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -197,10 +198,32 @@ export function createFeedUI({ store, actions }) {
         }
       });
     },
-    { rootMargin: "600px" }
+    { rootMargin: `${sentinelMargin}px` }
   );
 
   observer.observe(sentinel);
+
+  let isScrollQueued = false;
+  const isSentinelNearViewport = () => {
+    if (!sentinel) {
+      return false;
+    }
+    const rect = sentinel.getBoundingClientRect();
+    return rect.top <= window.innerHeight + sentinelMargin && rect.bottom >= -sentinelMargin;
+  };
+  const handleScroll = () => {
+    if (isScrollQueued) {
+      return;
+    }
+    isScrollQueued = true;
+    requestAnimationFrame(() => {
+      isScrollQueued = false;
+      if (isSentinelNearViewport()) {
+        requestNextPage();
+      }
+    });
+  };
+  window.addEventListener("scroll", handleScroll, { passive: true });
 
   const updateReplyFormState = (entry, state, replyState) => {
     const trimmed = entry.replyInput.value.trim();
@@ -589,5 +612,9 @@ export function createFeedUI({ store, actions }) {
   tick();
   const interval = setInterval(tick, 60000);
 
-  return () => clearInterval(interval);
+  return () => {
+    clearInterval(interval);
+    observer.disconnect();
+    window.removeEventListener("scroll", handleScroll);
+  };
 }
