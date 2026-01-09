@@ -103,6 +103,9 @@
       </section>
 
       <section class="panel feed-panel">
+        <div class="feed-warning" role="note">
+          <span>Warning:</span> Sensitive content ahead.
+        </div>
         <div class="feed-header">
           <div>
             <h2>Global Vents</h2>
@@ -118,7 +121,10 @@
             <span id="feed-status-text"></span>
             <button class="ghost small" id="retry-feed" type="button">Retry</button>
           </div>
-          <div class="feed-loading" id="feed-loading" aria-live="polite">Loading more...</div>
+          <div class="feed-loading" id="feed-loading" aria-live="polite">
+            <span class="feed-spinner" aria-hidden="true"></span>
+            <span class="feed-loading-text">Loading more...</span>
+          </div>
           <div id="feed-sentinel" class="feed-sentinel" aria-hidden="true"></div>
         </div>
       </section>

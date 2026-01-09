@@ -1,7 +1,7 @@
 import { supabase, configError } from "./supabase.js";
 
 const TABLE = "confessions";
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 4;
 let nameColumnCache;
 let nameColumnPromise;
 

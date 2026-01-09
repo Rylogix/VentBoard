@@ -1,4 +1,5 @@
 import { createActions } from "./state/actions.js";
+import { getPageSize } from "./data/confessionsApi.js";
 import { startAuthBootstrap } from "./state/authBootstrap.js";
 import { createStore } from "./state/store.js";
 import { createFeedUI } from "./ui/feed.js";
@@ -19,7 +20,7 @@ const store = createStore({
   repliesByConfession: {},
   lastSubmitted: null,
   cooldownEnd: null,
-  page: { offset: 0, limit: 12, hasMore: true },
+  page: { offset: 0, limit: getPageSize(), hasMore: true },
 });
 
 const actions = createActions(store);
