@@ -13,6 +13,23 @@ export function getPageSize() {
   return PAGE_SIZE;
 }
 
+export async function fetchConfessionCount() {
+  if (!supabase) {
+    return { count: null, error: new Error(configError) };
+  }
+
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select("id", { head: true, count: "exact" })
+    .eq("visibility", "public");
+
+  if (error) {
+    return { count: null, error };
+  }
+
+  return { count: Number.isFinite(count) ? count : 0, error: null };
+}
+
 function isMissingColumnError(error) {
   const message = (error && error.message ? error.message : "").toLowerCase();
   return message.includes("column") && message.includes("does not exist");

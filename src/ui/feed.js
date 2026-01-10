@@ -585,8 +585,9 @@ export function createFeedUI({ store, actions }) {
       }
     });
 
-    if (state.confessions.length > 0) {
-      meta.textContent = `${state.confessions.length} vents in view.`;
+    const totalCount = Number.isFinite(state.totalConfessions) ? state.totalConfessions : null;
+    if (totalCount !== null) {
+      meta.textContent = `There are ${totalCount} Global Vents.`;
     }
 
     refreshButton.disabled = state.loading || state.loadingMore;

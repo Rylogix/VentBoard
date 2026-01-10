@@ -4,6 +4,7 @@ import {
   createConfession,
   deleteConfession,
   fetchConfessions,
+  fetchConfessionCount,
   fetchLatestConfessionByUser,
   getConfigError,
   getPageSize,
@@ -225,7 +226,16 @@ export function createActions(store) {
     });
     store.setState({ repliesByConfession: {} });
 
-    const { data, error } = await fetchConfessions({ offset: 0, limit: pageSize });
+    const [confessionsResult, countResult] = await Promise.all([
+      fetchConfessions({ offset: 0, limit: pageSize }),
+      fetchConfessionCount(),
+    ]);
+    const { data, error } = confessionsResult;
+    const totalCount = Number.isFinite(countResult?.count) ? countResult.count : null;
+
+    if (Number.isFinite(totalCount)) {
+      store.setState({ totalConfessions: totalCount });
+    }
 
     if (error) {
       store.setState({ loading: false, error: errorMessage(error) });
@@ -403,6 +413,9 @@ export function createActions(store) {
         confessions: [data, ...current.confessions],
         lastSubmitted,
         cooldownEnd,
+        totalConfessions: Number.isFinite(current.totalConfessions)
+          ? current.totalConfessions + 1
+          : current.totalConfessions,
         page: {
           ...current.page,
           offset: current.page.offset + 1,
@@ -664,6 +677,10 @@ export function createActions(store) {
         lastSubmitted: null,
         cooldownEnd: null,
         submitError: "",
+        totalConfessions:
+          removed && Number.isFinite(current.totalConfessions)
+            ? Math.max(0, current.totalConfessions - 1)
+            : current.totalConfessions,
         page: {
           ...current.page,
           offset: removed ? Math.max(0, current.page.offset - 1) : current.page.offset,
